@@ -1,0 +1,252 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  PRODUCER
+  CONSUMER
+  STORAGE_OWNER
+  TRANSPORTER
+  ADMIN
+}
+
+model User {
+  id                  String   @id @default(uuid())
+  username            String   @unique
+  email               String   @unique
+  passwordHash        String
+  fullName            String?
+  phoneNumber         String?
+  addressLine1        String?
+  addressLine2        String?
+  city                String?
+  stateProvince       String?
+  postalCode          String?
+  country             String   @default("Angola")
+  latitude            Float?
+  longitude           Float?
+  profilePictureUrl   String?
+  role                UserRole
+  isVerified          Boolean  @default(false)
+  verificationDetails String?
+  averageRating       Float?
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+
+  // Relations
+  producerDetails    ProducerDetails?    @relation("ProducerDetails")
+  storageDetails     StorageDetails?     @relation("StorageDetails")
+  transporterDetails TransporterDetails? @relation("TransporterDetails")
+  productListings    ProductListing[]    @relation("ProducerListings")
+  storageListings    StorageListing[]    @relation("StorageListings")
+  transportListings  TransportListing[]  @relation("TransportListings")
+  buyerOrders        Order[]             @relation("BuyerOrders")
+  sellerOrders       Order[]             @relation("SellerOrders")
+  transporterOrders  Order[]             @relation("TransporterOrders")
+  reviewsGiven       Review[]            @relation("ReviewerReviews")
+  reviewsReceived    Review[]            @relation("ReviewedUserReviews")
+  messagesSent       Message[]           @relation("SenderMessages")
+  messagesReceived   Message[]           @relation("ReceiverMessages")
+}
+
+model ProducerDetails {
+  id              String  @id @default(uuid())
+  userId          String  @unique
+  farmName        String?
+  farmDescription String?
+  certifications  String?
+  user            User    @relation("ProducerDetails", fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model StorageDetails {
+  id                     String  @id @default(uuid())
+  userId                 String  @unique
+  facilityName           String?
+  businessRegistrationId String?
+  user                   User    @relation("StorageDetails", fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model TransporterDetails {
+  id                         String  @id @default(uuid())
+  userId                     String  @unique
+  companyName                String?
+  driverLicenseId            String?
+  vehicleRegistrationDetails String?
+  user                       User    @relation("TransporterDetails", fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model ProductListing {
+  id                      String    @id @default(uuid())
+  producerId              String
+  title                   String
+  description             String
+  category                String
+  subcategory             String?
+  quantityAvailable       Float
+  unitOfMeasure           String
+  pricePerUnit            Float
+  currency                String    @default("AOA")
+  plannedAvailabilityDate DateTime?
+  actualAvailabilityDate  DateTime?
+  locationAddress         String?
+  locationLatitude        Float?
+  locationLongitude       Float?
+  qualityCertifications   String?
+  imagesUrls              Json?
+  videoUrl                String?
+  status                  String
+  createdAt               DateTime  @default(now())
+  updatedAt               DateTime  @updatedAt
+
+  // Relations
+  producer   User        @relation("ProducerListings", fields: [producerId], references: [id])
+  orderItems OrderItem[] @relation("ProductOrderItems")
+  reviews    Review[]    @relation("ProductReviews")
+}
+
+model StorageListing {
+  id                 String   @id @default(uuid())
+  ownerId            String
+  facilityName       String
+  description        String
+  storageType        String
+  totalCapacity      Float?
+  capacityUnit       String?
+  availableCapacity  Float?
+  amenities          Json?
+  pricingStructure   String
+  responsibilities   String?
+  addressLine1       String
+  city               String
+  postalCode         String
+  country            String   @default("Angola")
+  latitude           Float
+  longitude          Float
+  imagesUrls         Json?
+  availabilityStatus String
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  // Relations
+  owner   User     @relation("StorageListings", fields: [ownerId], references: [id])
+  orders  Order[]  @relation("StorageOrders")
+  reviews Review[] @relation("StorageReviews")
+}
+
+model TransportListing {
+  id                     String   @id @default(uuid())
+  transporterId          String
+  serviceTitle           String
+  description            String?
+  vehicleType            String
+  carryingCapacityWeight Float?
+  capacityWeightUnit     String?
+  carryingCapacityVolume Float?
+  capacityVolumeUnit     String?
+  operationalRoutes      String?
+  primaryDestinationType String?
+  pricingModel           String
+  baseLocationCity       String
+  baseLocationCountry    String   @default("Angola")
+  availabilityStatus     String
+  insuranceDetails       String?
+  imagesUrls             Json?
+  createdAt              DateTime @default(now())
+  updatedAt              DateTime @updatedAt
+
+  // Relations
+  transporter User     @relation("TransportListings", fields: [transporterId], references: [id])
+  orders      Order[]  @relation("TransportOrders")
+  reviews     Review[] @relation("TransportReviews")
+}
+
+model Order {
+  id                    String    @id @default(uuid())
+  buyerId               String
+  sellerId              String
+  transporterId         String?
+  storageId             String?
+  orderDate             DateTime  @default(now())
+  totalAmount           Float
+  currency              String    @default("AOA")
+  orderStatus           String
+  paymentStatus         String
+  paymentMethod         String?
+  transactionId         String?
+  shippingAddressLine1  String
+  shippingCity          String
+  shippingPostalCode    String
+  shippingCountry       String    @default("Angola")
+  notesForSeller        String?
+  notesForTransporter   String?
+  estimatedDeliveryDate DateTime?
+  actualDeliveryDate    DateTime?
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+
+  // Relations
+  buyer            User              @relation("BuyerOrders", fields: [buyerId], references: [id])
+  seller           User              @relation("SellerOrders", fields: [sellerId], references: [id])
+  transporter      User?             @relation("TransporterOrders", fields: [transporterId], references: [id], map: "fk_order_transporter_user")
+  transportListing TransportListing? @relation("TransportOrders", fields: [transporterId], references: [id], map: "fk_order_transporter_listing")
+  storage          StorageListing?   @relation("StorageOrders", fields: [storageId], references: [id])
+  orderItems       OrderItem[]       @relation("OrderItems")
+}
+
+model OrderItem {
+  id                  String   @id @default(uuid())
+  orderId             String
+  productListingId    String
+  quantityOrdered     Float
+  pricePerUnitAtOrder Float
+  subtotal            Float
+  createdAt           DateTime @default(now())
+
+  // Relations
+  order          Order          @relation("OrderItems", fields: [orderId], references: [id], onDelete: Cascade)
+  productListing ProductListing @relation("ProductOrderItems", fields: [productListingId], references: [id])
+}
+
+model Review {
+  id                 String   @id @default(uuid())
+  reviewerId         String
+  reviewedEntityId   String
+  reviewedEntityType String
+  rating             Int
+  comment            String?
+  reviewDate         DateTime @default(now())
+  isApprovedByAdmin  Boolean  @default(true)
+  createdAt          DateTime @default(now())
+
+  // Relations
+  reviewer          User              @relation("ReviewerReviews", fields: [reviewerId], references: [id])
+  reviewedUser      User?             @relation("ReviewedUserReviews", fields: [reviewedEntityId], references: [id], map: "fk_review_user")
+  reviewedProduct   ProductListing?   @relation("ProductReviews", fields: [reviewedEntityId], references: [id], map: "fk_review_product")
+  reviewedStorage   StorageListing?   @relation("StorageReviews", fields: [reviewedEntityId], references: [id], map: "fk_review_storage")
+  reviewedTransport TransportListing? @relation("TransportReviews", fields: [reviewedEntityId], references: [id], map: "fk_review_transport")
+}
+
+model Message {
+  id             String    @id @default(uuid())
+  conversationId String
+  senderId       String
+  receiverId     String
+  messageContent String
+  sentAt         DateTime  @default(now())
+  readAt         DateTime?
+
+  // Relations
+  sender   User @relation("SenderMessages", fields: [senderId], references: [id])
+  receiver User @relation("ReceiverMessages", fields: [receiverId], references: [id])
+}
