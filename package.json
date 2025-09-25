@@ -10,22 +10,22 @@
     "lint": "eslint",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
-  
   "keywords": [],
   "author": "",
   "license": "ISC",
   "description": "",
-
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",
     "@prisma/client": "^6.16.2",
     "bcrypt": "^6.0.0",
+    "clsx": "^2.1.1",
     "next": "15.5.3",
     "next-auth": "^4.24.11",
     "prisma": "^6.16.2",
     "react": "19.1.0",
     "react-dom": "19.1.0",
     "react-hook-form": "^7.63.0",
+    "tailwind-merge": "^3.3.1",
     "zod": "^4.1.11"
   },
   "devDependencies": {

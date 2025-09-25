@@ -1,38 +1,22 @@
-import React from 'react';
+'use client';
+
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-
-interface NavLinkProps {
-  href: string;
-  children: React.ReactNode;
-  className?: string;
-}
-
-const NavLink: React.FC<NavLinkProps> = ({ href, children, className = '' }) => {
-  const pathname = usePathname();
-  const isActive = pathname === href;
-
-  return (
-    <Link 
-      href={href}
-      className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${
-        isActive 
-          ? 'bg-green-700 text-white' 
-          : 'text-gray-300 hover:bg-green-600 hover:text-white'
-      } ${className}`}
-    >
-      {children}
-    </Link>
-  );
-};
+import { useState } from 'react';
+import { Button } from '@/components/ui/button';
 
 interface HeaderProps {
   userRole?: 'PRODUCER' | 'CONSUMER' | 'STORAGE_OWNER' | 'TRANSPORTER' | 'ADMIN' | null;
   userName?: string | null;
 }
 
-export const Header: React.FC<HeaderProps> = ({ userRole, userName }) => {
-  const [isMenuOpen, setIsMenuOpen] = React.useState(false);
+export default function Header({ userRole, userName }: HeaderProps) {
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const pathname = usePathname();
+
+  const isActive = (path: string) => {
+    return pathname === path;
+  };
 
   return (
     <header className="bg-green-800 text-white shadow-md">
@@ -40,27 +24,63 @@ export const Header: React.FC<HeaderProps> = ({ userRole, userName }) => {
         <div className="flex justify-between h-16">
           <div className="flex items-center">
             <Link href="/" className="flex-shrink-0 flex items-center">
-              <span className="text-xl font-bold">AgriLogística Angola</span>
+              <div className="w-8 h-8 bg-green-600 rounded-full flex items-center justify-center mr-2">
+                <span className="text-white font-bold text-sm">A</span>
+              </div>
+              <span className="text-xl font-bold">AgriConnect Angola</span>
             </Link>
             <nav className="hidden md:ml-6 md:flex md:space-x-2">
-              <NavLink href="/">Início</NavLink>
-              <NavLink href="/products">Produtos</NavLink>
-              <NavLink href="/storage">Armazéns</NavLink>
-              <NavLink href="/transport">Transporte</NavLink>
-              {userRole === 'PRODUCER' && (
-                <NavLink href="/dashboard/producer">Painel do Produtor</NavLink>
-              )}
-              {userRole === 'CONSUMER' && (
-                <NavLink href="/dashboard/consumer">Painel do Comprador</NavLink>
-              )}
-              {userRole === 'STORAGE_OWNER' && (
-                <NavLink href="/dashboard/storage">Painel de Armazenamento</NavLink>
-              )}
-              {userRole === 'TRANSPORTER' && (
-                <NavLink href="/dashboard/transport">Painel de Transporte</NavLink>
-              )}
-              {userRole === 'ADMIN' && (
-                <NavLink href="/admin">Administração</NavLink>
+              <Link 
+                href="/" 
+                className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+                  isActive('/') 
+                    ? 'bg-green-700 text-white' 
+                    : 'text-gray-300 hover:bg-green-600 hover:text-white'
+                }`}
+              >
+                Início
+              </Link>
+              <Link 
+                href="/products" 
+                className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+                  isActive('/products') 
+                    ? 'bg-green-700 text-white' 
+                    : 'text-gray-300 hover:bg-green-600 hover:text-white'
+                }`}
+              >
+                Produtos
+              </Link>
+              <Link 
+                href="/storage" 
+                className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+                  isActive('/storage') 
+                    ? 'bg-green-700 text-white' 
+                    : 'text-gray-300 hover:bg-green-600 hover:text-white'
+                }`}
+              >
+                Armazéns
+              </Link>
+              <Link 
+                href="/transport" 
+                className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+                  isActive('/transport') 
+                    ? 'bg-green-700 text-white' 
+                    : 'text-gray-300 hover:bg-green-600 hover:text-white'
+                }`}
+              >
+                Transporte
+              </Link>
+              {userRole && (
+                <Link 
+                  href="/dashboard" 
+                  className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+                    pathname.startsWith('/dashboard') 
+                      ? 'bg-green-700 text-white' 
+                      : 'text-gray-300 hover:bg-green-600 hover:text-white'
+                  }`}
+                >
+                  Dashboard
+                </Link>
               )}
             </nav>
           </div>
@@ -81,13 +101,13 @@ export const Header: React.FC<HeaderProps> = ({ userRole, userName }) => {
                     </svg>
                   </button>
                   <div className="absolute right-0 w-48 mt-2 py-2 bg-white rounded-md shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300 z-50">
-                    <Link href="/profile" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                    <Link href="/dashboard/profile" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
                       Perfil
                     </Link>
                     <Link href="/dashboard" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
-                      Painel
+                      Dashboard
                     </Link>
-                    <Link href="/settings" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                    <Link href="/dashboard/settings" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
                       Configurações
                     </Link>
                     <hr className="my-1" />
@@ -99,14 +119,15 @@ export const Header: React.FC<HeaderProps> = ({ userRole, userName }) => {
               </div>
             ) : (
               <div className="flex items-center space-x-4">
-                <Link href="/login" className="text-gray-300 hover:text-white">
-                  Entrar
+                <Link href="/auth/login">
+                  <Button variant="outline" className="border-gray-300 text-white hover:bg-green-600">
+                    Entrar
+                  </Button>
                 </Link>
-                <Link 
-                  href="/register" 
-                  className="bg-green-600 hover:bg-green-500 text-white px-4 py-2 rounded-md text-sm font-medium"
-                >
-                  Registrar
+                <Link href="/auth/register">
+                  <Button variant="primary">
+                    Cadastrar
+                  </Button>
                 </Link>
               </div>
             )}
@@ -135,21 +156,43 @@ export const Header: React.FC<HeaderProps> = ({ userRole, userName }) => {
       {isMenuOpen && (
         <div className="md:hidden">
           <div className="px-2 pt-2 pb-3 space-y-1 sm:px-3">
-            <Link href="/" className="block px-3 py-2 rounded-md text-base font-medium text-white bg-green-700">
+            <Link 
+              href="/" 
+              className={`block px-3 py-2 rounded-md text-base font-medium ${
+                isActive('/') ? 'text-white bg-green-700' : 'text-gray-300 hover:text-white hover:bg-green-600'
+              }`}
+              onClick={() => setIsMenuOpen(false)}
+            >
               Início
             </Link>
-            <Link href="/products" className="block px-3 py-2 rounded-md text-base font-medium text-gray-300 hover:text-white hover:bg-green-600">
+            <Link 
+              href="/products" 
+              className="block px-3 py-2 rounded-md text-base font-medium text-gray-300 hover:text-white hover:bg-green-600"
+              onClick={() => setIsMenuOpen(false)}
+            >
               Produtos
             </Link>
-            <Link href="/storage" className="block px-3 py-2 rounded-md text-base font-medium text-gray-300 hover:text-white hover:bg-green-600">
+            <Link 
+              href="/storage" 
+              className="block px-3 py-2 rounded-md text-base font-medium text-gray-300 hover:text-white hover:bg-green-600"
+              onClick={() => setIsMenuOpen(false)}
+            >
               Armazéns
             </Link>
-            <Link href="/transport" className="block px-3 py-2 rounded-md text-base font-medium text-gray-300 hover:text-white hover:bg-green-600">
+            <Link 
+              href="/transport" 
+              className="block px-3 py-2 rounded-md text-base font-medium text-gray-300 hover:text-white hover:bg-green-600"
+              onClick={() => setIsMenuOpen(false)}
+            >
               Transporte
             </Link>
             {userRole && (
-              <Link href="/dashboard" className="block px-3 py-2 rounded-md text-base font-medium text-gray-300 hover:text-white hover:bg-green-600">
-                Painel
+              <Link 
+                href="/dashboard" 
+                className="block px-3 py-2 rounded-md text-base font-medium text-gray-300 hover:text-white hover:bg-green-600"
+                onClick={() => setIsMenuOpen(false)}
+              >
+                Dashboard
               </Link>
             )}
           </div>
@@ -159,13 +202,25 @@ export const Header: React.FC<HeaderProps> = ({ userRole, userName }) => {
                 <div className="px-3 py-2 text-base font-medium text-white">
                   {userName}
                 </div>
-                <Link href="/profile" className="block px-3 py-2 rounded-md text-base font-medium text-gray-300 hover:text-white hover:bg-green-600">
+                <Link 
+                  href="/dashboard/profile" 
+                  className="block px-3 py-2 rounded-md text-base font-medium text-gray-300 hover:text-white hover:bg-green-600"
+                  onClick={() => setIsMenuOpen(false)}
+                >
                   Perfil
                 </Link>
-                <Link href="/messages" className="block px-3 py-2 rounded-md text-base font-medium text-gray-300 hover:text-white hover:bg-green-600">
+                <Link 
+                  href="/messages" 
+                  className="block px-3 py-2 rounded-md text-base font-medium text-gray-300 hover:text-white hover:bg-green-600"
+                  onClick={() => setIsMenuOpen(false)}
+                >
                   Mensagens
                 </Link>
-                <Link href="/settings" className="block px-3 py-2 rounded-md text-base font-medium text-gray-300 hover:text-white hover:bg-green-600">
+                <Link 
+                  href="/dashboard/settings" 
+                  className="block px-3 py-2 rounded-md text-base font-medium text-gray-300 hover:text-white hover:bg-green-600"
+                  onClick={() => setIsMenuOpen(false)}
+                >
                   Configurações
                 </Link>
                 <button className="w-full text-left px-3 py-2 rounded-md text-base font-medium text-red-400 hover:text-red-300 hover:bg-green-600">
@@ -174,11 +229,19 @@ export const Header: React.FC<HeaderProps> = ({ userRole, userName }) => {
               </div>
             ) : (
               <div className="px-2 space-y-1">
-                <Link href="/login" className="block px-3 py-2 rounded-md text-base font-medium text-gray-300 hover:text-white hover:bg-green-600">
+                <Link 
+                  href="/auth/login" 
+                  className="block px-3 py-2 rounded-md text-base font-medium text-gray-300 hover:text-white hover:bg-green-600"
+                  onClick={() => setIsMenuOpen(false)}
+                >
                   Entrar
                 </Link>
-                <Link href="/register" className="block px-3 py-2 rounded-md text-base font-medium text-gray-300 hover:text-white hover:bg-green-600">
-                  Registrar
+                <Link 
+                  href="/auth/register" 
+                  className="block px-3 py-2 rounded-md text-base font-medium text-gray-300 hover:text-white hover:bg-green-600"
+                  onClick={() => setIsMenuOpen(false)}
+                >
+                  Cadastrar
                 </Link>
               </div>
             )}
@@ -187,7 +250,4 @@ export const Header: React.FC<HeaderProps> = ({ userRole, userName }) => {
       )}
     </header>
   );
-};
-
-export default Header;
-
+}
