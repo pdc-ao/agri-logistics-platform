@@ -8,7 +8,11 @@
     "build": "next build --turbopack",
     "start": "next start",
     "lint": "eslint",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "db:push": "prisma db push",
+    "db:migrate": "prisma migrate dev",
+    "db:generate": "prisma generate",
+    "db:studio": "prisma studio"
   },
   "keywords": [],
   "author": "",
