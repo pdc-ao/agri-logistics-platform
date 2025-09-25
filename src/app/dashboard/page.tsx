@@ -6,7 +6,7 @@ export default async function DashboardPage() {
 
   // If not signed in, redirect to login
   if (!session?.user?.email) {
-    redirect('/login');
+    redirect('/auth/login');
   }
 
   const role = session.user.role ?? 'USER';

@@ -5,7 +5,7 @@ import ProfileShell from '@/components/dashboard/profile-shell';
 
 export default async function StorageOwnerProfilePage() {
   const session = await getAuthSession();
-  if (!session?.user?.id) redirect('/login');
+  if (!session?.user?.id) redirect('/auth/login');
 
   const user = await db.user.findUnique({ where: { id: session.user.id } });
 

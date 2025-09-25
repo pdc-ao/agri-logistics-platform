@@ -5,7 +5,7 @@ import ProfileShell from '@/components/dashboard/profile-shell';
 
 export default async function ProducerProfilePage() {
   const session = await getAuthSession();
-  if (!session?.user?.id) redirect('/login');
+  if (!session?.user?.id) redirect('/auth/login');
 
   const user = await db.user.findUnique({ where: { id: session.user.id } });
 
@@ -56,7 +56,6 @@ export default async function ProducerProfilePage() {
         <section>
           <h3 className="font-semibold mb-2">Recent Listings</h3>
           <div className="space-y-2">
-            {/* For demo, list the latest 5 products */}
             {(
               await db.productListing.findMany({
                 where: { producerId: user.id },
