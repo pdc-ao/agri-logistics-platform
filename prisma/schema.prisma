@@ -1,9 +1,6 @@
 // This is your Prisma schema file,
 // learn more about it in the docs: https://pris.ly/d/prisma-schema
 
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -18,7 +15,14 @@ enum UserRole {
   CONSUMER
   STORAGE_OWNER
   TRANSPORTER
+  TRANSFORMER
   ADMIN
+}
+
+enum VerificationStatus {
+  PENDING
+  VERIFIED
+  REJECTED
 }
 
 model User {
@@ -39,6 +43,7 @@ model User {
   profilePictureUrl   String?
   role                UserRole
   isVerified          Boolean  @default(false)
+  verificationStatus  VerificationStatus @default(PENDING)
   verificationDetails String?
   averageRating       Float?
   createdAt           DateTime @default(now())
@@ -58,6 +63,15 @@ model User {
   reviewsReceived    Review[]            @relation("ReviewedUserReviews")
   messagesSent       Message[]           @relation("SenderMessages")
   messagesReceived   Message[]           @relation("ReceiverMessages")
+
+  // New relations
+  businessDocuments  BusinessDocument[]
+  ratingsGiven       UserRating[]        @relation("Reviewer")
+  ratingsReceived    UserRating[]        @relation("Reviewed")
+  transformationFacilities TransformationFacility[] @relation("OwnerFacilities")
+  walletBalance      WalletBalance?
+  buyerTransactions  PaymentTransaction[] @relation("Buyer")
+  sellerTransactions PaymentTransaction[] @relation("Seller")
 }
 
 model ProducerDetails {
@@ -193,7 +207,7 @@ model Order {
   estimatedDeliveryDate DateTime?
   actualDeliveryDate    DateTime?
   createdAt             DateTime  @default(now())
-  updatedAt             DateTime  @updatedAt
+  updatedAt             DateTime @default(now()) @updatedAt
 
   // Relations
   buyer            User              @relation("BuyerOrders", fields: [buyerId], references: [id])
@@ -249,4 +263,76 @@ model Message {
   // Relations
   sender   User @relation("SenderMessages", fields: [senderId], references: [id])
   receiver User @relation("ReceiverMessages", fields: [receiverId], references: [id])
+}
+
+/*
+  New models for verification, user ratings (user-focused), transformation facilities, and internal escrow
+*/
+
+model BusinessDocument {
+  id          String   @id @default(uuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id])
+  docType     String   // e.g., "ID", "BusinessRegistration", "TaxCertificate"
+  fileUrl     String
+  status      String   @default("PENDING") // PENDING, APPROVED, REJECTED
+  submittedAt DateTime @default(now())
+  reviewedAt  DateTime?
+  reviewerId  String?  // admin id
+  notes       String?
+}
+
+model UserRating {
+  id          String   @id @default(uuid())
+  reviewerId  String
+  reviewer    User     @relation("Reviewer", fields: [reviewerId], references: [id])
+  reviewedId  String
+  reviewed    User     @relation("Reviewed", fields: [reviewedId], references: [id])
+  rating      Int
+  comment     String?
+  createdAt   DateTime @default(now())
+  isModerated Boolean  @default(false)
+}
+
+model TransformationFacility {
+  id           String   @id @default(uuid())
+  ownerId      String
+  owner        User     @relation("OwnerFacilities", fields: [ownerId], references: [id])
+  facilityName String
+  description  String?
+  facilityType String?   // e.g., "Milling", "Processing", "Packaging"
+  capacity     Float?
+  capacityUnit String?
+  addressLine1 String
+  city         String
+  country      String
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+model PaymentTransaction {
+  id               String   @id @default(uuid())
+  buyerId          String
+  buyer            User     @relation("Buyer", fields: [buyerId], references: [id])
+  sellerId         String
+  seller           User     @relation("Seller", fields: [sellerId], references: [id])
+  amount           Decimal  @db.Decimal(18, 2)
+  currency         String   @default("AOA")
+  status           String   @default("PENDING") // PENDING, FUNDED, SELLER_CONFIRMED, BUYER_CONFIRMED, RELEASED, REFUNDED, DISPUTED, CANCELLED
+  buyerConfirmed   Boolean  @default(false)
+  sellerConfirmed  Boolean  @default(false)
+  escrowHeldAt     DateTime?
+  releasedAt       DateTime?
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+  providerPaymentId String?
+  providerChargeId  String?
+}
+
+model WalletBalance {
+  id        String   @id @default(uuid())
+  userId    String   @unique
+  user      User     @relation(fields: [userId], references: [id])
+  balance   Decimal  @db.Decimal(18, 2) @default("0")
+  updatedAt DateTime @updatedAt
 }
