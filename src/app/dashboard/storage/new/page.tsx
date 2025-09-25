@@ -21,10 +21,10 @@ export default function NewStoragePage() {
     responsibilities?: string;
     addressLine1: string;
     city: string;
-    postalCode: string;
-    country: string;
-    latitude: number;
-    longitude: number;
+    postalCode?: string;
+    country?: string;
+    latitude?: number;
+    longitude?: number;
     imagesUrls?: string[];
     availabilityStatus: string;
   }) => {
@@ -32,15 +32,13 @@ export default function NewStoragePage() {
     setError('');
 
     try {
+      // Do NOT send ownerId from the client. Server will derive owner from the session.
       const response = await fetch('/api/storage', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-          ...data,
-          ownerId: 'current-user-id', // This should come from auth context
-        }),
+        body: JSON.stringify(data),
       });
 
       if (response.ok) {

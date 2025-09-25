@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { signIn } from 'next-auth/react';
 import { LoginForm } from '@/components/forms/login-form';
 
 export default function LoginPage() {
@@ -12,20 +13,21 @@ export default function LoginPage() {
   const handleLogin = async (data: { email: string; password: string }) => {
     setLoading(true);
     setError('');
-    
+
     try {
-      // Here you would implement actual login with NextAuth
-      console.log('Login attempt:', data);
-      
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      // For demo purposes, accept any login
-      if (data.email && data.password) {
-        // Redirect to dashboard on success
-        router.push('/dashboard');
+      // call NextAuth credential provider; do NOT redirect automatically
+      const res = await signIn('credentials', {
+        redirect: false,
+        email: data.email,
+        password: data.password,
+      });
+
+      // res contains ok/error fields when redirect:false
+      if (res?.error) {
+        setError(res.error || 'Login failed');
       } else {
-        setError('Credenciais inválidas');
+        // successful sign in — navigation AFTER session cookie is set
+        router.push('/dashboard');
       }
     } catch (err) {
       console.error('Login error:', err);
@@ -36,14 +38,9 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-md w-full space-y-8">
-        <LoginForm 
-          onSubmit={handleLogin}
-          isLoading={loading}
-          error={error}
-        />
-      </div>
+    <div className="p-6 max-w-md mx-auto">
+      <h1 className="text-2xl font-bold mb-4">Entrar</h1>
+      <LoginForm onSubmit={handleLogin} isLoading={loading} error={error} />
     </div>
   );
 }

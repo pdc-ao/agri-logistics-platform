@@ -1,121 +1,67 @@
 import { NextResponse } from 'next/server';
 import { db } from '@/lib/prisma';
+import { getAuthSession } from '@/lib/auth';
 
-export async function GET(request: Request) {
-  try {
-    const { searchParams } = new URL(request.url);
-    const ownerId = searchParams.get('ownerId');
-    const city = searchParams.get('city');
-    const storageType = searchParams.get('storageType');
-    
-    const storageListings = await db.storageListing.findMany({
-      where: {
-        ...(ownerId ? { ownerId } : {}),
-        ...(city ? { city } : {}),
-        ...(storageType ? { storageType } : {}),
-        availabilityStatus: {
-          in: ['Available', 'PartiallyAvailable']
-        }
-      },
-      include: {
-        owner: {
-          select: {
-            id: true,
-            username: true,
-            fullName: true,
-            averageRating: true,
-          }
-        },
-        reviews: {
-          select: {
-            id: true,
-            rating: true,
-            comment: true,
-            reviewDate: true,
-            reviewer: {
-              select: {
-                id: true,
-                username: true,
-              }
-            }
-          }
-        }
-      },
-      orderBy: {
-        createdAt: 'desc',
-      },
-    });
-    
-    return NextResponse.json(storageListings);
-  } catch (error) {
-    console.error('Error fetching storage listings:', error);
-    return NextResponse.json(
-      { error: 'Falha ao buscar armazéns' },
-      { status: 500 }
-    );
-  }
+export async function GET() {
+  const storages = await db.storageListing.findMany({
+    include: { owner: { select: { id: true, username: true, fullName: true, averageRating: true } } },
+    orderBy: { createdAt: 'desc' },
+  });
+  return NextResponse.json(storages);
 }
 
 export async function POST(request: Request) {
   try {
-    const body = await request.json();
-    
-    // Validação básica
-    if (!body.ownerId || !body.facilityName || !body.description || !body.storageType || 
-        !body.addressLine1 || !body.city || !body.postalCode || 
-        body.latitude === undefined || body.longitude === undefined) {
-      return NextResponse.json(
-        { error: 'Dados incompletos' },
-        { status: 400 }
-      );
+    const session = await getAuthSession();
+
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
     }
-    
-    // Verificar se o proprietário existe
-    const owner = await db.user.findFirst({
-      where: {
-        id: body.ownerId,
-        role: 'STORAGE_OWNER',
-      }
-    });
-    
+
+    const ownerId = session.user.id;
+
+    // ensure owner exists and has correct role
+    const owner = await db.user.findUnique({ where: { id: ownerId } });
     if (!owner) {
-      return NextResponse.json(
-        { error: 'Proprietário de armazém não encontrado' },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: 'Owner not found' }, { status: 404 });
     }
-    
-    // Criar listagem de armazém
-    const storageListing = await db.storageListing.create({
+    if (owner.role !== 'STORAGE_OWNER') {
+      return NextResponse.json({ error: 'User is not a storage owner' }, { status: 403 });
+    }
+
+    const body = await request.json();
+
+    // basic validation (expand as needed)
+    if (!body.facilityName || !body.city || !body.addressLine1) {
+      return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
+    }
+
+    const created = await db.storageListing.create({
       data: {
-        ownerId: body.ownerId,
+        ownerId,
         facilityName: body.facilityName,
-        description: body.description,
-        storageType: body.storageType,
-        totalCapacity: body.totalCapacity,
-        capacityUnit: body.capacityUnit,
-        availableCapacity: body.availableCapacity,
-        amenities: body.amenities,
-        pricingStructure: body.pricingStructure,
-        responsibilities: body.responsibilities,
+        description: body.description ?? null,
+        storageType: body.storageType ?? null,
+        totalCapacity: body.totalCapacity ?? null,
+        capacityUnit: body.capacityUnit ?? null,
+        availableCapacity: body.availableCapacity ?? null,
+        amenities: body.amenities ?? null,
+        pricingStructure: body.pricingStructure ?? null,
+        responsibilities: body.responsibilities ?? null,
         addressLine1: body.addressLine1,
         city: body.city,
-        postalCode: body.postalCode,
-        country: body.country || 'Angola',
-        latitude: body.latitude,
-        longitude: body.longitude,
-        imagesUrls: body.imagesUrls,
-        availabilityStatus: body.availabilityStatus || 'Available',
+        postalCode: body.postalCode ?? null,
+        country: body.country ?? null,
+        latitude: body.latitude ?? null,
+        longitude: body.longitude ?? null,
+        imagesUrls: body.imagesUrls ?? null,
+        availabilityStatus: body.availabilityStatus ?? 'Available',
       },
     });
-    
-    return NextResponse.json(storageListing, { status: 201 });
-    
-  } catch (error) {
-    console.error('Error creating storage listing:', error);
-    return NextResponse.json(
-      { error: 'Falha ao criar listagem de armazém' },
-      { status: 500 }
-    );
+
+    return NextResponse.json(created, { status: 201 });
+  } catch (err) {
+    console.error('POST /api/storage error:', err);
+    return NextResponse.json({ error: 'Server error' }, { status: 500 });
   }
 }
