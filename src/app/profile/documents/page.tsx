@@ -2,11 +2,13 @@
 
 import DocumentUpload from '@/components/verification/DocumentUpload';
 
-export default function ProfileDocumentsPage() {
-  const userId = 'replace-with-session-id';
+export default function DocumentsPage() {
+  // In a real scenario get user id from session
+  const userId = 'replace-with-session-user-id';
+
   return (
-    <div className="space-y-6 max-w-3xl">
-      <h1 className="text-2xl font-bold text-gray-800">Documentos de Verificação</h1>
+    <div className="max-w-3xl mx-auto py-10">
+      <h1 className="text-2xl font-bold mb-6 text-gray-800">Verificação de Documentos</h1>
       <DocumentUpload userId={userId} />
     </div>
   );

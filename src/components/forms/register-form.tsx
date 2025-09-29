@@ -11,7 +11,7 @@ interface RegisterFormProps {
     password: string;
     confirmPassword: string;
     fullName: string;
-    role: 'PRODUCER' | 'CONSUMER' | 'STORAGE_OWNER' | 'TRANSPORTER';
+    role: 'PRODUCER' | 'CONSUMER' | 'STORAGE_OWNER' | 'TRANSPORTER' | 'TRANSFORMER';
     phoneNumber?: string;
   }) => void;
   isLoading?: boolean;
@@ -29,48 +29,45 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({
     password: '',
     confirmPassword: '',
     fullName: '',
-    role: '' as 'PRODUCER' | 'CONSUMER' | 'STORAGE_OWNER' | 'TRANSPORTER',
+    role: '' as 'PRODUCER' | 'CONSUMER' | 'STORAGE_OWNER' | 'TRANSPORTER' | 'TRANSFORMER',
     phoneNumber: '',
   });
   const [formError, setFormError] = React.useState('');
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+  function handleChange(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) {
     const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
-  };
+    setFormData(prev => ({ ...prev, [name]: value as any }));
+  }
 
-  const handleSubmit = (e: React.FormEvent) => {
+  function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setFormError('');
 
-    // Validação básica
     if (!formData.username || !formData.email || !formData.password || !formData.fullName || !formData.role) {
       setFormError('Todos os campos obrigatórios devem ser preenchidos');
       return;
     }
-
     if (formData.password !== formData.confirmPassword) {
       setFormError('As senhas não coincidem');
       return;
     }
-
     if (formData.password.length < 8) {
       setFormError('A senha deve ter pelo menos 8 caracteres');
       return;
     }
-
     onSubmit(formData);
-  };
+  }
 
   const roleOptions = [
     { value: 'PRODUCER', label: 'Produtor (Agricultor/Pecuarista)' },
     { value: 'CONSUMER', label: 'Consumidor (Comprador)' },
     { value: 'STORAGE_OWNER', label: 'Proprietário de Armazém' },
     { value: 'TRANSPORTER', label: 'Transportador' },
+    { value: 'TRANSFORMER', label: 'Transformador (Processamento)' },
   ];
 
   return (
-    <Card className="w-full max-w-2xl mx-auto">
+    <Card className="w-full max-w-2xl mx-auto p-6">
       <form onSubmit={handleSubmit} className="space-y-6">
         <div>
           <h2 className="text-2xl font-bold text-center text-gray-800">Criar Conta</h2>
@@ -80,8 +77,8 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({
         </div>
 
         {(error || formError) && (
-          <div className="bg-red-50 border-l-4 border-red-500 p-4">
-            <p className="text-red-700">{error || formError}</p>
+          <div className="bg-red-50 border-l-4 border-red-500 p-4 rounded">
+            <p className="text-red-700 text-sm">{error || formError}</p>
           </div>
         )}
 
@@ -90,78 +87,70 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({
             id="username"
             name="username"
             label="Nome de usuário"
-            type="text"
-            placeholder="seu_usuario"
             value={formData.username}
             onChange={handleChange}
+            placeholder="seu_usuario"
             required
           />
-
           <Input
             id="email"
             name="email"
             label="Email"
             type="email"
-            placeholder="seu.email@exemplo.com"
             value={formData.email}
             onChange={handleChange}
+            placeholder="seu.email@exemplo.com"
             required
           />
-
           <Input
             id="fullName"
             name="fullName"
             label="Nome completo"
-            type="text"
-            placeholder="Seu Nome Completo"
             value={formData.fullName}
             onChange={handleChange}
+            placeholder="Seu Nome Completo"
             required
           />
-
           <Input
             id="phoneNumber"
             name="phoneNumber"
             label="Número de telefone"
-            type="tel"
-            placeholder="+244 XXX XXX XXX"
             value={formData.phoneNumber}
             onChange={handleChange}
+            placeholder="+244 XXX XXX XXX"
           />
-
           <Input
             id="password"
             name="password"
             label="Senha"
             type="password"
-            placeholder="********"
             value={formData.password}
             onChange={handleChange}
+            placeholder="********"
             required
             helperText="Mínimo de 8 caracteres"
           />
-
           <Input
             id="confirmPassword"
             name="confirmPassword"
             label="Confirmar senha"
             type="password"
-            placeholder="********"
             value={formData.confirmPassword}
             onChange={handleChange}
+            placeholder="********"
             required
           />
         </div>
 
         <Select
-          id="role"
-          name="role"
-          label="Tipo de usuário"
-          options={roleOptions}
-          value={formData.role}
-          onChange={handleChange}
-          placeholder="Selecione seu tipo de usuário"
-          required
+            id="role"
+            name="role"
+            label="Tipo de usuário"
+            options={roleOptions}
+            value={formData.role}
+            onChange={handleChange}
+            placeholder="Selecione seu tipo de usuário"
+            required
         />
 
         <div className="flex items-center">
@@ -184,19 +173,14 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({
           </label>
         </div>
 
-        <Button
-          type="submit"
-          variant="primary"
-          fullWidth
-          disabled={isLoading}
-        >
+        <Button type="submit" variant="primary" fullWidth disabled={isLoading}>
           {isLoading ? 'Registrando...' : 'Registrar'}
         </Button>
 
         <div className="text-center">
           <p className="text-sm text-gray-600">
             Já tem uma conta?{' '}
-            <a href="/login" className="font-medium text-green-600 hover:text-green-500">
+            <a href="/auth/login" className="font-medium text-green-600 hover:text-green-500">
               Entrar
             </a>
           </p>
