@@ -1,63 +1,128 @@
-import { NextResponse } from 'next/server';
-import { db } from '@/lib/prisma';
+//api/products/route.ts
+import { NextRequest, NextResponse } from "next/server";
+import { withAuth } from "@/lib/session-validation";
+import { prisma } from "@/lib/prisma";
+import { createProductSchema, validateRequest } from "@/lib/validation";
+import { rateLimit } from "@/lib/rate-limit";
+import { requirePermission } from "@/lib/rbac-middleware";
 
-export async function GET(request: Request) {
+const productRateLimit = rateLimit({
+  windowMs: 60000,
+  maxRequests: 10,
+});
+
+// POST: Create a new product listing
+export const POST = withAuth(async (request: NextRequest, context, user) => {
+  try {
+    const rateLimitResponse = await productRateLimit(request);
+    if (rateLimitResponse) return rateLimitResponse;
+
+    const permissionResponse = await requirePermission("product:create")(request);
+    if (permissionResponse) return permissionResponse;
+
+    const body = await request.json();
+    const validation = validateRequest(createProductSchema, body);
+
+    if (!validation.success) {
+      return NextResponse.json(
+        {
+          error: "Validation failed",
+          details: validation.errors?.issues.map((issue) => ({
+            field: issue.path.join("."),
+            message: issue.message,
+          })),
+        },
+        { status: 400 }
+      );
+    }
+
+    // Ensure user is a valid PRODUCER
+    const producer = await prisma.user.findFirst({
+      where: {
+        id: user.id,
+        role: "PRODUCER",
+        entityType: "INDIVIDUAL",
+      },
+    });
+
+    if (!producer) {
+      return NextResponse.json({ error: "Unauthorized producer" }, { status: 403 });
+    }
+
+    const product = await prisma.productListing.create({
+      data: {
+        ...validation.data!,
+        producerId: user.id,
+        status: "Active",
+      },
+    });
+
+    return NextResponse.json({ success: true, product });
+  } catch (error) {
+    console.error("Error creating product:", error);
+    return NextResponse.json({ error: "Failed to create product" }, { status: 500 });
+  }
+}, ["PRODUCER", "ADMIN"]);
+
+// GET: Fetch product listings with filters and pagination
+export const GET = async (request: NextRequest) => {
   try {
     const { searchParams } = new URL(request.url);
 
-    const category = searchParams.get('category') || undefined;
-    const producerId = searchParams.get('producerId') || undefined;
-    const q = searchParams.get('q') || undefined;
-    const sort = searchParams.get('sort') || 'date_desc';
-    const page = parseInt(searchParams.get('page') || '0', 10);
-    const limit = parseInt(searchParams.get('limit') || '0', 10); // 0 => legacy (array only)
+    const page = Math.max(1, parseInt(searchParams.get("page") || "1"));
+    const limit = Math.min(100, Math.max(1, parseInt(searchParams.get("limit") || "20")));
+    const skip = (page - 1) * limit;
+
+    const category = searchParams.get("category") || undefined;
+    const producerId = searchParams.get("producerId") || undefined;
+    const search = searchParams.get("q") || undefined;
+    const sort = searchParams.get("sort") || "date_desc";
 
     const orderBy =
-      sort === 'price_asc' ? { pricePerUnit: 'asc' } :
-      sort === 'price_desc' ? { pricePerUnit: 'desc' } :
-      sort === 'qty_desc' ? { quantityAvailable: 'desc' } :
-      sort === 'qty_asc' ? { quantityAvailable: 'asc' } :
-      sort === 'date_asc' ? { createdAt: 'asc' } :
-      { createdAt: 'desc' };
+      sort === "price_asc" ? { pricePerUnit: "asc" } :
+      sort === "price_desc" ? { pricePerUnit: "desc" } :
+      sort === "qty_desc" ? { quantityAvailable: "desc" } :
+      sort === "qty_asc" ? { quantityAvailable: "asc" } :
+      sort === "date_asc" ? { createdAt: "asc" } :
+      { createdAt: "desc" };
 
     const whereClause: any = {
-      status: 'Active',
-      ...(category ? { category } : {}),
-      ...(producerId ? { producerId } : {}),
-      ...(q ? {
+      status: "Active",
+      ...(category && { category }),
+      ...(producerId && { producerId }),
+      ...(search && {
         OR: [
-          { title: { contains: q, mode: 'insensitive' } },
-          { description: { contains: q, mode: 'insensitive' } },
-          { category: { contains: q, mode: 'insensitive' } },
+          { title: { contains: search, mode: "insensitive" } },
+          { description: { contains: search, mode: "insensitive" } },
+          { category: { contains: search, mode: "insensitive" } },
         ],
-      } : {}),
+      }),
     };
 
-    if (limit === 0) {
-      const products = await db.productListing.findMany({
+    const [products, total] = await Promise.all([
+      prisma.productListing.findMany({
         where: whereClause,
-        include: {
-          producer: { select: { id: true, username: true, fullName: true, averageRating: true } },
-          reviews: { select: { id: true, rating: true } },
-        },
+        skip,
+        take: limit,
         orderBy,
-        take: 200, // safety cap
-      });
-      return NextResponse.json(products);
-    }
-
-    const total = await db.productListing.count({ where: whereClause });
-
-    const products = await db.productListing.findMany({
-      where: whereClause,
-      include: {
-        producer: { select: { id: true, username: true, fullName: true, averageRating: true } },
-        reviews: { select: { id: true, rating: true } },
-      },
-      orderBy,
-      skip: page * limit,
-      take: limit,
-    });
+        include: {
+          producer: {
+            select: {
+              id: true,
+              username: true,
+              fullName: true,
+              companyName: true,
+              entityType: true,
+              averageRating: true,
+            },
+          },
+          reviews: {
+            select: { id: true, rating: true },
+          },
+        },
+      }),
+      prisma.productListing.count({ where: whereClause }),
+    ]);
 
     return NextResponse.json({
       data: products,
@@ -69,60 +134,7 @@ export async function GET(request: Request) {
       },
     });
   } catch (error) {
-    console.error('Error fetching products:', error);
-    return NextResponse.json(
-      { error: 'Falha ao buscar produtos' },
-      { status: 500 }
-    );
+    console.error("Error fetching products:", error);
+    return NextResponse.json({ error: "Failed to fetch products" }, { status: 500 });
   }
-}
-
-export async function POST(request: Request) {
-  try {
-    const body = await request.json();
-
-    if (!body.producerId || !body.title || !body.description || !body.category ||
-        body.quantityAvailable == null || !body.unitOfMeasure || body.pricePerUnit == null) {
-      return NextResponse.json({ error: 'Dados incompletos' }, { status: 400 });
-    }
-
-    const producer = await db.user.findFirst({
-      where: { id: body.producerId, role: 'PRODUCER' },
-    });
-
-    if (!producer) {
-      return NextResponse.json({ error: 'Produtor não encontrado' }, { status: 404 });
-    }
-
-    const product = await db.productListing.create({
-      data: {
-        producerId: body.producerId,
-        title: body.title,
-        description: body.description,
-        category: body.category,
-        subcategory: body.subcategory,
-        quantityAvailable: body.quantityAvailable,
-        unitOfMeasure: body.unitOfMeasure,
-        pricePerUnit: body.pricePerUnit,
-        currency: body.currency || 'AOA',
-        plannedAvailabilityDate: body.plannedAvailabilityDate ? new Date(body.plannedAvailabilityDate) : null,
-        actualAvailabilityDate: body.actualAvailabilityDate ? new Date(body.actualAvailabilityDate) : null,
-        locationAddress: body.locationAddress,
-        locationLatitude: body.locationLatitude,
-        locationLongitude: body.locationLongitude,
-        qualityCertifications: body.qualityCertifications,
-        imagesUrls: body.imagesUrls,
-        videoUrl: body.videoUrl,
-        status: body.status || 'Active',
-      },
-    });
-
-    return NextResponse.json(product, { status: 201 });
-  } catch (error) {
-    console.error('Error creating product:', error);
-    return NextResponse.json(
-      { error: 'Falha ao criar produto' },
-      { status: 500 }
-    );
-  }
-}
+};

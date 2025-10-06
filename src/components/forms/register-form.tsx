@@ -1,19 +1,11 @@
-import React from 'react';
-import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button';
-import { Select } from '@/components/ui/select';
-import { Card } from '@/components/ui/card';
+import React from "react";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { Select } from "@/components/ui/select";
+import { Card } from "@/components/ui/card";
 
 interface RegisterFormProps {
-  onSubmit: (data: {
-    username: string;
-    email: string;
-    password: string;
-    confirmPassword: string;
-    fullName: string;
-    role: 'PRODUCER' | 'CONSUMER' | 'STORAGE_OWNER' | 'TRANSPORTER' | 'TRANSFORMER';
-    phoneNumber?: string;
-  }) => void;
+  onSubmit: (data: any) => void;
   isLoading?: boolean;
   error?: string;
 }
@@ -24,53 +16,85 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({
   error,
 }) => {
   const [formData, setFormData] = React.useState({
-    username: '',
-    email: '',
-    password: '',
-    confirmPassword: '',
-    fullName: '',
-    role: '' as 'PRODUCER' | 'CONSUMER' | 'STORAGE_OWNER' | 'TRANSPORTER' | 'TRANSFORMER',
-    phoneNumber: '',
+    entityType: "INDIVIDUAL" as "INDIVIDUAL" | "COMPANY",
+    username: "",
+    email: "",
+    password: "",
+    confirmPassword: "",
+    fullName: "",
+    companyName: "",
+    registrationNumber: "",
+    taxId: "",
+    role: "" as
+      | "PRODUCER"
+      | "CONSUMER"
+      | "STORAGE_OWNER"
+      | "TRANSPORTER"
+      | "TRANSFORMER",
+    phoneNumber: "",
   });
-  const [formError, setFormError] = React.useState('');
+  const [formError, setFormError] = React.useState("");
 
-  function handleChange(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) {
+  function handleChange(
+    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
+  ) {
     const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value as any }));
+    setFormData((prev) => ({ ...prev, [name]: value as any }));
   }
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    setFormError('');
+    setFormError("");
 
-    if (!formData.username || !formData.email || !formData.password || !formData.fullName || !formData.role) {
-      setFormError('Todos os campos obrigatórios devem ser preenchidos');
+    if (
+      !formData.username ||
+      !formData.email ||
+      !formData.password ||
+      !formData.role
+    ) {
+      setFormError("Todos os campos obrigatórios devem ser preenchidos");
       return;
     }
     if (formData.password !== formData.confirmPassword) {
-      setFormError('As senhas não coincidem');
+      setFormError("As senhas não coincidem");
       return;
     }
     if (formData.password.length < 8) {
-      setFormError('A senha deve ter pelo menos 8 caracteres');
+      setFormError("A senha deve ter pelo menos 8 caracteres");
       return;
     }
+
+    // Additional validation: require fullName for INDIVIDUAL, companyName+registrationNumber+taxId for COMPANY
+    if (formData.entityType === "INDIVIDUAL" && !formData.fullName) {
+      setFormError("Nome completo é obrigatório para indivíduos");
+      return;
+    }
+    if (
+      formData.entityType === "COMPANY" &&
+      (!formData.companyName || !formData.registrationNumber || !formData.taxId)
+    ) {
+      setFormError("Informações da empresa são obrigatórias");
+      return;
+    }
+
     onSubmit(formData);
   }
 
   const roleOptions = [
-    { value: 'PRODUCER', label: 'Produtor (Agricultor/Pecuarista)' },
-    { value: 'CONSUMER', label: 'Consumidor (Comprador)' },
-    { value: 'STORAGE_OWNER', label: 'Proprietário de Armazém' },
-    { value: 'TRANSPORTER', label: 'Transportador' },
-    { value: 'TRANSFORMER', label: 'Transformador (Processamento)' },
+    { value: "PRODUCER", label: "Produtor (Agricultor/Pecuarista)" },
+    { value: "CONSUMER", label: "Consumidor (Comprador)" },
+    { value: "STORAGE_OWNER", label: "Proprietário de Armazém" },
+    { value: "TRANSPORTER", label: "Transportador" },
+    { value: "TRANSFORMER", label: "Transformador (Processamento)" },
   ];
 
   return (
     <Card className="w-full max-w-2xl mx-auto p-6">
       <form onSubmit={handleSubmit} className="space-y-6">
         <div>
-          <h2 className="text-2xl font-bold text-center text-gray-800">Criar Conta</h2>
+          <h2 className="text-2xl font-bold text-center text-gray-800">
+            Criar Conta
+          </h2>
           <p className="mt-2 text-center text-gray-600">
             Junte-se à plataforma AgriLogística Angola
           </p>
@@ -81,6 +105,20 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({
             <p className="text-red-700 text-sm">{error || formError}</p>
           </div>
         )}
+
+        {/* Entity Type Selector */}
+        <Select
+          id="entityType"
+          name="entityType"
+          label="Tipo de Entidade"
+          options={[
+            { value: "INDIVIDUAL", label: "Pessoa Física" },
+            { value: "COMPANY", label: "Empresa" },
+          ]}
+          value={formData.entityType}
+          onChange={handleChange}
+          required
+        />
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <Input
@@ -102,15 +140,49 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({
             placeholder="seu.email@exemplo.com"
             required
           />
-          <Input
-            id="fullName"
-            name="fullName"
-            label="Nome completo"
-            value={formData.fullName}
-            onChange={handleChange}
-            placeholder="Seu Nome Completo"
-            required
-          />
+
+          {formData.entityType === "INDIVIDUAL" ? (
+            <Input
+              id="fullName"
+              name="fullName"
+              label="Nome completo"
+              value={formData.fullName}
+              onChange={handleChange}
+              placeholder="Seu Nome Completo"
+              required
+            />
+          ) : (
+            <>
+              <Input
+                id="companyName"
+                name="companyName"
+                label="Nome da Empresa"
+                value={formData.companyName}
+                onChange={handleChange}
+                placeholder="Ex: AgroFarms Lda"
+                required
+              />
+              <Input
+                id="registrationNumber"
+                name="registrationNumber"
+                label="Número de Registro"
+                value={formData.registrationNumber}
+                onChange={handleChange}
+                placeholder="REG-XXXX"
+                required
+              />
+              <Input
+                id="taxId"
+                name="taxId"
+                label="NIF / Tax ID"
+                value={formData.taxId}
+                onChange={handleChange}
+                placeholder="TIN-XXXX"
+                required
+              />
+            </>
+          )}
+
           <Input
             id="phoneNumber"
             name="phoneNumber"
@@ -143,14 +215,14 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({
         </div>
 
         <Select
-            id="role"
-            name="role"
-            label="Tipo de usuário"
-            options={roleOptions}
-            value={formData.role}
-            onChange={handleChange}
-            placeholder="Selecione seu tipo de usuário"
-            required
+          id="role"
+          name="role"
+          label="Tipo de usuário"
+          options={roleOptions}
+          value={formData.role}
+          onChange={handleChange}
+          placeholder="Selecione seu tipo de usuário"
+          required
         />
 
         <div className="flex items-center">
@@ -162,29 +234,26 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({
             required
           />
           <label htmlFor="terms" className="ml-2 block text-sm text-gray-700">
-            Eu concordo com os{' '}
-            <a href="/terms" className="font-medium text-green-600 hover:text-green-500">
+            Eu concordo com os{" "}
+            <a
+              href="/terms"
+              className="font-medium text-green-600 hover:text-green-500"
+            >
               Termos de Serviço
-            </a>{' '}
-            e{' '}
-            <a href="/privacy" className="font-medium text-green-600 hover:text-green-500">
+            </a>{" "}
+            e{" "}
+            <a
+              href="/privacy"
+              className="font-medium text-green-600 hover:text-green-500"
+            >
               Política de Privacidade
             </a>
           </label>
         </div>
 
         <Button type="submit" variant="primary" fullWidth disabled={isLoading}>
-          {isLoading ? 'Registrando...' : 'Registrar'}
+          {isLoading ? "Registrando..." : "Registrar"}
         </Button>
-
-        <div className="text-center">
-          <p className="text-sm text-gray-600">
-            Já tem uma conta?{' '}
-            <a href="/auth/login" className="font-medium text-green-600 hover:text-green-500">
-              Entrar
-            </a>
-          </p>
-        </div>
       </form>
     </Card>
   );

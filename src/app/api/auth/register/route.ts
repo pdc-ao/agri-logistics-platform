@@ -1,19 +1,47 @@
-import { NextResponse } from 'next/server';
-import { db } from '@/lib/prisma';
-import bcrypt from 'bcrypt';
-import { z } from 'zod';
+import { NextResponse } from "next/server";
+import { db } from "@/lib/prisma";
+import bcrypt from "bcrypt";
+import { z } from "zod";
 
-const registerSchema = z.object({
+// Base schema
+const baseSchema = {
   username: z.string().min(3),
   email: z.string().email(),
   password: z.string().min(8),
-  fullName: z.string().min(2),
   phoneNumber: z.string().optional(),
-  role: z.enum(['PRODUCER', 'CONSUMER', 'STORAGE_OWNER', 'TRANSPORTER', 'TRANSFORMER']),
+  role: z.enum([
+    "PRODUCER",
+    "CONSUMER",
+    "STORAGE_OWNER",
+    "TRANSPORTER",
+    "TRANSFORMER",
+  ]),
   addressLine1: z.string().optional(),
   city: z.string().optional(),
-  country: z.string().default('Angola'),
+  country: z.string().default("Angola"),
+};
+
+// Individual schema
+const individualSchema = z.object({
+  ...baseSchema,
+  entityType: z.literal("INDIVIDUAL"),
+  fullName: z.string().min(2),
+  dateOfBirth: z.string().optional(),
 });
+
+// Company schema
+const companySchema = z.object({
+  ...baseSchema,
+  entityType: z.literal("COMPANY"),
+  companyName: z.string().min(2),
+  registrationNumber: z.string().min(2),
+  taxId: z.string().min(2),
+  companyType: z.string().optional(),
+  incorporationDate: z.string().optional(),
+});
+
+// Union schema
+const registerSchema = z.union([individualSchema, companySchema]);
 
 export async function POST(request: Request) {
   try {
@@ -25,16 +53,13 @@ export async function POST(request: Request) {
       where: {
         OR: [
           { email: validatedData.email },
-          { username: validatedData.username }
-        ]
-      }
+          { username: validatedData.username },
+        ],
+      },
     });
 
     if (existingUser) {
-      return NextResponse.json(
-        { error: 'User already exists' },
-        { status: 409 }
-      );
+      return NextResponse.json({ error: "User already exists" }, { status: 409 });
     }
 
     // Hash password
@@ -46,13 +71,45 @@ export async function POST(request: Request) {
         username: validatedData.username,
         email: validatedData.email,
         passwordHash,
-        fullName: validatedData.fullName,
+        entityType: validatedData.entityType,
+        role: validatedData.role,
         phoneNumber: validatedData.phoneNumber,
         addressLine1: validatedData.addressLine1,
         city: validatedData.city,
         country: validatedData.country,
-        role: validatedData.role,
-        verificationStatus: 'PENDING',
+        verificationStatus: "PENDING",
+
+        // Individual fields
+        fullName:
+          validatedData.entityType === "INDIVIDUAL"
+            ? validatedData.fullName
+            : null,
+        dateOfBirth:
+          validatedData.entityType === "INDIVIDUAL"
+            ? validatedData.dateOfBirth
+              ? new Date(validatedData.dateOfBirth)
+              : null
+            : null,
+
+        // Company fields
+        companyName:
+          validatedData.entityType === "COMPANY"
+            ? validatedData.companyName
+            : null,
+        registrationNumber:
+          validatedData.entityType === "COMPANY"
+            ? validatedData.registrationNumber
+            : null,
+        taxId:
+          validatedData.entityType === "COMPANY" ? validatedData.taxId : null,
+        companyType:
+          validatedData.entityType === "COMPANY"
+            ? validatedData.companyType
+            : null,
+        incorporationDate:
+          validatedData.entityType === "COMPANY" && validatedData.incorporationDate
+            ? new Date(validatedData.incorporationDate)
+            : null,
       },
     });
 
@@ -64,19 +121,19 @@ export async function POST(request: Request) {
       },
     });
 
-    return NextResponse.json({
-      id: user.id,
-      username: user.username,
-      email: user.email,
-      role: user.role,
-      verificationStatus: user.verificationStatus,
-    }, { status: 201 });
-
-  } catch (error) {
-    console.error('Registration error:', error);
     return NextResponse.json(
-      { error: 'Registration failed' },
-      { status: 500 }
+      {
+        id: user.id,
+        username: user.username,
+        email: user.email,
+        role: user.role,
+        entityType: user.entityType,
+        verificationStatus: user.verificationStatus,
+      },
+      { status: 201 }
     );
+  } catch (error) {
+    console.error("Registration error:", error);
+    return NextResponse.json({ error: "Registration failed" }, { status: 500 });
   }
 }
