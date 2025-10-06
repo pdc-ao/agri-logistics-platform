@@ -54,14 +54,19 @@ export interface ApiError {
   error: string;
 }
 
-export interface BusinessDocument {
+export interface Document {
   id: string;
-  userId: string;
-  docType: string;
+  userId?: string;
+  type: string;
+  fileName: string;
   fileUrl: string;
+  fileKey?: string;
+  fileSize?: number;
+  mimeType?: string;
   status: string;
-  submittedAt: string;
-  reviewedAt?: string;
-  reviewerId?: string;
-  notes?: string;
+  rejectionReason?: string;
+  reviewedBy?: string;
+  reviewedAt?: Date;
+  createdAt: Date;
+  updatedAt?: Date;
 }
