@@ -1,11 +1,19 @@
-import { NextResponse } from "next/server";
-import { db } from "@/lib/prisma";
-import bcrypt from "bcrypt";
+import { NextRequest, NextResponse } from "next/server";
+import { db } from "@/lib/prisma";          // ✅ use db
+import { hash } from "bcrypt";
 import { z } from "zod";
+import { rateLimit } from "@/lib/rate-limit"; // ✅ matches file name
+
+// Create rate limiter for registration
+const registerRateLimit = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  maxRequests: 5,           // 5 registration attempts per 15 minutes
+  message: "Too many registration attempts. Please try again later.",
+});
 
 // Base schema
 const baseSchema = {
-  username: z.string().min(3),
+  username: z.string().min(3).optional(), // we’ll generate one if not provided
   email: z.string().email(),
   password: z.string().min(8),
   phoneNumber: z.string().optional(),
@@ -43,8 +51,14 @@ const companySchema = z.object({
 // Union schema
 const registerSchema = z.union([individualSchema, companySchema]);
 
-export async function POST(request: Request) {
+export async function POST(request: NextRequest) {
   try {
+    // Apply rate limiting FIRST
+    const rateLimitResponse = await registerRateLimit(request);
+    if (rateLimitResponse) {
+      return rateLimitResponse; // Too many attempts
+    }
+
     const body = await request.json();
     const validatedData = registerSchema.parse(body);
 
@@ -53,7 +67,7 @@ export async function POST(request: Request) {
       where: {
         OR: [
           { email: validatedData.email },
-          { username: validatedData.username },
+          { username: validatedData.username ?? "" },
         ],
       },
     });
@@ -63,12 +77,17 @@ export async function POST(request: Request) {
     }
 
     // Hash password
-    const passwordHash = await bcrypt.hash(validatedData.password, 12);
+    const passwordHash = await hash(validatedData.password, 12);
+
+    // Generate username if not provided
+    const username =
+      validatedData.username ||
+      validatedData.email.split("@")[0] + "-" + Date.now();
 
     // Create user
-    const user = await db.user.create({
+    const user = await prisma.user.create({
       data: {
-        username: validatedData.username,
+        username,
         email: validatedData.email,
         passwordHash,
         entityType: validatedData.entityType,
@@ -85,10 +104,8 @@ export async function POST(request: Request) {
             ? validatedData.fullName
             : null,
         dateOfBirth:
-          validatedData.entityType === "INDIVIDUAL"
-            ? validatedData.dateOfBirth
-              ? new Date(validatedData.dateOfBirth)
-              : null
+          validatedData.entityType === "INDIVIDUAL" && validatedData.dateOfBirth
+            ? new Date(validatedData.dateOfBirth)
             : null,
 
         // Company fields
@@ -114,7 +131,7 @@ export async function POST(request: Request) {
     });
 
     // Create wallet balance
-    await db.walletBalance.create({
+    await prisma.walletBalance.create({
       data: {
         userId: user.id,
         balance: 0,
