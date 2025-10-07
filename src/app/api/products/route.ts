@@ -1,7 +1,7 @@
 //api/products/route.ts
 import { NextRequest, NextResponse } from "next/server";
 import { withAuth } from "@/lib/session-validation";
-import { prisma } from "@/lib/prisma";
+import { db } from "@/lib/prisma";
 import { createProductSchema, validateRequest } from "@/lib/validation";
 import { rateLimit } from "@/lib/rate-limit";
 import { requirePermission } from "@/lib/rbac-middleware";

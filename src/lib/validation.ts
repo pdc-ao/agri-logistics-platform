@@ -286,6 +286,7 @@ export function requirePermission(...permissions: Permission[]) {
 
 // Example: Protected API route with validation and rate limiting
 // src/app/api/products/route.ts (Updated)
+/*
 import { NextRequest, NextResponse } from "next/server";
 import { withAuth } from "@/lib/session-validation";
 import { prisma } from "@/lib/prisma";
@@ -417,4 +418,4 @@ export const GET = async (request: NextRequest) => {
       { status: 500 }
     );
   }
-};
+};*/
