@@ -1,7 +1,7 @@
 // src/app/api/documents/me/route.ts
 import { NextRequest, NextResponse } from "next/server";
 import { withAuth } from "@/lib/session-validation";
-import { prisma } from "@/lib/prisma";
+import { db } from "@/lib/prisma";
 
 // GET /api/documents/me - User fetches their own documents
 export const GET = withAuth(async (request: NextRequest, context, user) => {

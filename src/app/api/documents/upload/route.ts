@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
+import { db } from "@/lib/prisma";
 import { validateDocumentUpload } from "@/types/documents";
 import { DocumentStatus } from "@prisma/client";
 
