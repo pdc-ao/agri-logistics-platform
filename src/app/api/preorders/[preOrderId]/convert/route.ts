@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
-import prisma from '@/lib/prisma';
+import { db } from '@/lib/prisma';
 import { authOptions } from '@/lib/auth';
 
 // NOTE: This is a simplified placeholder. Adjust mapping to real product listing & logistics.

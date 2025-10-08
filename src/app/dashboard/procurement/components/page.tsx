@@ -1,4 +1,4 @@
-import prisma from '@/lib/prisma';
+import { db } from '@/lib/prisma';
 
 export default async function ComponentsPage() {
   const components = await prisma.component.findMany({
