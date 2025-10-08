@@ -1,5 +1,4 @@
-import prisma from '@/lib/prisma';
-import { StatusBadge } from '@/components/ui/status-badge';
+{ db }import { StatusBadge } from '@/components/ui/status-badge';
 import PlanTabs from './tabs';
 import { notFound } from 'next/navigation';
 import { getServerSession } from 'next-auth';

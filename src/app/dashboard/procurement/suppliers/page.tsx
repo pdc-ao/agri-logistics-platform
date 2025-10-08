@@ -1,5 +1,4 @@
-import prisma from '@/lib/prisma';
-
+import { db } from '@/lib/prisma';
 export default async function SuppliersPage() {
   const suppliers = await prisma.supplier.findMany({
     orderBy: { createdAt: 'desc' },
