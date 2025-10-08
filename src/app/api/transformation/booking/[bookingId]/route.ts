@@ -1,7 +1,7 @@
 // src/app/api/transformation/bookings/[bookingId]/route.ts
 import { NextRequest, NextResponse } from "next/server";
 import { withAuth } from "@/lib/session-validation";
-import { prisma } from "@/lib/prisma";
+import { db } from "@/lib/prisma";
 import { sendNotification } from "@/lib/notifications";
 
 // GET - Get specific booking details

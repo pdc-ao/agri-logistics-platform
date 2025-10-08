@@ -119,12 +119,12 @@ export async function uploadMultipleToS3(
 
   return Promise.all(uploads);
 }
-
+/*
 // src/app/api/documents/upload/route.ts
 import { NextRequest, NextResponse } from "next/server";
 import { withAuth } from "@/lib/session-validation";
 import { uploadToS3 } from "@/lib/storage";
-import { prisma } from "@/lib/prisma";
+import { db } from "@/lib/prisma";
 
 export const POST = withAuth(async (request: NextRequest, context, user) => {
   try {

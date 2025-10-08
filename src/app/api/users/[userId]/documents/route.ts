@@ -1,7 +1,7 @@
 // src/app/api/users/[userId]/documents/route.ts
 import { NextRequest, NextResponse } from "next/server";
 import { withAuth } from "@/lib/session-validation";
-import { prisma } from "@/lib/prisma";
+import { db } from "@/lib/prisma";
 
 interface Params {
   params: { userId: string };
