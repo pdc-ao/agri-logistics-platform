@@ -1,73 +1,15 @@
-import { getServerSession } from 'next-auth';
-import { NextAuthOptions } from 'next-auth';
-import CredentialsProvider from 'next-auth/providers/credentials';
-import { db } from '@/lib/prisma';
+import { NextResponse } from "next/server";
+import { getServerSession } from "next-auth";
+import { authOptions } from "./auth"; // careful: avoid circular import if this is the same file
 
-export const authOptions: NextAuthOptions = {
-  providers: [
-    CredentialsProvider({
-      name: 'credentials',
-      credentials: {
-        email: { label: 'Email', type: 'email' },
-        password: { label: 'Password', type: 'password' }
-      },
-      async authorize(credentials) {
-        if (!credentials?.email || !credentials?.password) {
-          return null;
-        }
+export async function requireAdmin() {
+  const session = await getServerSession(authOptions);
 
-        try {
-          const user = await db.user.findUnique({
-            where: { email: credentials.email }
-          });
-
-          if (!user) {
-            return null;
-          }
-
-          // In production, use bcrypt to compare passwords
-          // const isValid = await bcrypt.compare(credentials.password, user.passwordHash);
-          const isValid = credentials.password === user.passwordHash; // Temporary for development
-
-          if (!isValid) {
-            return null;
-          }
-
-          return {
-            id: user.id,
-            email: user.email,
-            name: user.fullName || user.username,
-            role: user.role,
-          };
-        } catch (error) {
-          console.error('Auth error:', error);
-          return null;
-        }
-      }
-    })
-  ],
-  pages: {
-    signIn: '/auth/login',
-    signUp: '/auth/register',
-  },
-  callbacks: {
-    async jwt({ token, user }) {
-      if (user) {
-        token.role = user.role;
-      }
-      return token;
-    },
-    async session({ session, token }) {
-      if (token) {
-        session.user.id = token.sub;
-        session.user.role = token.role;
-      }
-      return session;
-    }
-  },
-  session: {
-    strategy: 'jwt'
+  if (!session || session.user?.role !== "ADMIN") {
+    // You can either throw or return a NextResponse
+    throw new Error("Not authorized");
+    // or: return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
-};
 
-export const getAuthSession = () => getServerSession(authOptions);
+  return session;
+}
