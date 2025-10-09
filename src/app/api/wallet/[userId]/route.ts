@@ -1,20 +1,21 @@
-import { NextResponse } from 'next/server';
-import { db } from '@/lib/prisma';
+import { NextResponse } from "next/server";
+import { db } from "@/lib/prisma";
 
 export async function GET(
   request: Request,
-  { params }: { params: { userId: string } }
+  { params }: { params: Promise<{ userId: string }> } // ✅ FIXED
 ) {
   try {
+    const { userId } = await params; // ✅ FIXED
+
     const wallet = await db.walletBalance.findUnique({
-      where: { userId: params.userId },
+      where: { userId },
     });
 
     if (!wallet) {
-      // Create wallet if it doesn't exist
       const newWallet = await db.walletBalance.create({
         data: {
-          userId: params.userId,
+          userId,
           balance: 0,
         },
       });
@@ -22,11 +23,10 @@ export async function GET(
     }
 
     return NextResponse.json(wallet);
-
   } catch (error) {
-    console.error('Wallet fetch error:', error);
+    console.error("Wallet fetch error:", error);
     return NextResponse.json(
-      { error: 'Failed to fetch wallet' },
+      { error: "Failed to fetch wallet" },
       { status: 500 }
     );
   }
