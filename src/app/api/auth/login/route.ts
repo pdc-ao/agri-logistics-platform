@@ -1,4 +1,3 @@
-// src/app/api/auth/login/route.ts
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/prisma";
 import { compare } from "bcrypt";
@@ -27,8 +26,8 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Find user by email
-    const user = await prisma.user.findUnique({
+    // ✅ Use db, not prisma
+    const user = await db.user.findUnique({
       where: { email },
     });
 
@@ -48,9 +47,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // At this point, login is successful
-    // If you want to issue a JWT manually, you could integrate `jsonwebtoken` here.
-    // Since you’re using NextAuth, you can just return the user info.
+    // Login successful
     return NextResponse.json({
       success: true,
       user: {
