@@ -17,8 +17,8 @@ export async function POST(request: Request) {
       );
     }
 
-    // Fetch user to check entityType and role
-    const user = await prisma.user.findUnique({
+    // ✅ Use db instead of prisma
+    const user = await db.user.findUnique({
       where: { id: userId },
       select: { id: true, entityType: true, role: true },
     });
@@ -36,8 +36,8 @@ export async function POST(request: Request) {
     // TODO: Upload file to S3/R2/etc. and get a real URL + key
     const fileUrl = `https://storage.example.com/documents/${userId}/${docType}-${Date.now()}.${file.name.split(".").pop()}`;
 
-    // Save document record
-    const document = await prisma.document.create({
+    // ✅ Use db instead of prisma
+    const document = await db.document.create({
       data: {
         userId,
         type: docType,
