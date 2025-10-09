@@ -2,18 +2,16 @@ import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/prisma";          // ✅ use db
 import { hash } from "bcrypt";
 import { z } from "zod";
-import { rateLimit } from "@/lib/rate-limit"; // ✅ matches file name
+import { rateLimit } from "@/lib/rate-limit";
 
-// Create rate limiter for registration
 const registerRateLimit = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  maxRequests: 5,           // 5 registration attempts per 15 minutes
+  windowMs: 15 * 60 * 1000,
+  maxRequests: 5,
   message: "Too many registration attempts. Please try again later.",
 });
 
-// Base schema
 const baseSchema = {
-  username: z.string().min(3).optional(), // we’ll generate one if not provided
+  username: z.string().min(3).optional(),
   email: z.string().email(),
   password: z.string().min(8),
   phoneNumber: z.string().optional(),
@@ -29,7 +27,6 @@ const baseSchema = {
   country: z.string().default("Angola"),
 };
 
-// Individual schema
 const individualSchema = z.object({
   ...baseSchema,
   entityType: z.literal("INDIVIDUAL"),
@@ -37,7 +34,6 @@ const individualSchema = z.object({
   dateOfBirth: z.string().optional(),
 });
 
-// Company schema
 const companySchema = z.object({
   ...baseSchema,
   entityType: z.literal("COMPANY"),
@@ -48,21 +44,16 @@ const companySchema = z.object({
   incorporationDate: z.string().optional(),
 });
 
-// Union schema
 const registerSchema = z.union([individualSchema, companySchema]);
 
 export async function POST(request: NextRequest) {
   try {
-    // Apply rate limiting FIRST
     const rateLimitResponse = await registerRateLimit(request);
-    if (rateLimitResponse) {
-      return rateLimitResponse; // Too many attempts
-    }
+    if (rateLimitResponse) return rateLimitResponse;
 
     const body = await request.json();
     const validatedData = registerSchema.parse(body);
 
-    // Check if user already exists
     const existingUser = await db.user.findFirst({
       where: {
         OR: [
@@ -76,16 +67,14 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "User already exists" }, { status: 409 });
     }
 
-    // Hash password
     const passwordHash = await hash(validatedData.password, 12);
 
-    // Generate username if not provided
     const username =
       validatedData.username ||
       validatedData.email.split("@")[0] + "-" + Date.now();
 
-    // Create user
-    const user = await prisma.user.create({
+    // ✅ use db instead of prisma
+    const user = await db.user.create({
       data: {
         username,
         email: validatedData.email,
@@ -97,8 +86,6 @@ export async function POST(request: NextRequest) {
         city: validatedData.city,
         country: validatedData.country,
         verificationStatus: "PENDING",
-
-        // Individual fields
         fullName:
           validatedData.entityType === "INDIVIDUAL"
             ? validatedData.fullName
@@ -107,8 +94,6 @@ export async function POST(request: NextRequest) {
           validatedData.entityType === "INDIVIDUAL" && validatedData.dateOfBirth
             ? new Date(validatedData.dateOfBirth)
             : null,
-
-        // Company fields
         companyName:
           validatedData.entityType === "COMPANY"
             ? validatedData.companyName
@@ -130,8 +115,8 @@ export async function POST(request: NextRequest) {
       },
     });
 
-    // Create wallet balance
-    await prisma.walletBalance.create({
+    // ✅ use db instead of prisma
+    await db.walletBalance.create({
       data: {
         userId: user.id,
         balance: 0,
