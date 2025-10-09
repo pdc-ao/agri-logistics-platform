@@ -17,9 +17,11 @@ export async function POST(
   if (!session?.user?.id)
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
-  const plan = await prisma.productionPlan.findUnique({
-    where: { id: params.planId }
-  });
+const { planId } = await params; // ✅ await the params object
+const plan = await db.productionPlan.findUnique({
+  where: { id: planId }
+});
+
   if (!plan) return NextResponse.json({ error: 'Plan not found' }, { status: 404 });
   if (!plan.allowPreOrders)
     return NextResponse.json({ error: 'Pre-Orders disabled' }, { status: 400 });
