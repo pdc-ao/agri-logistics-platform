@@ -5,11 +5,11 @@ import { requireAuth } from '@/lib/auth';
 
 export async function GET(
   request: Request,
-  { params }: { params: { userId: string } }
+  { params }: { params: Promise<{ userId: string }> }
 ) {
   try {
     const session = await requireAuth();
-    const { userId } = params;
+    const { userId } = await params;
 
     // Users can only access their own transactions, admins can access any
     if (session.user.role !== 'ADMIN' && userId !== session.user.id) {
