@@ -1,4 +1,3 @@
-// src/app/api/documents/me/route.ts
 import { NextRequest, NextResponse } from "next/server";
 import { withAuth } from "@/lib/session-validation";
 import { db } from "@/lib/prisma";
@@ -6,7 +5,7 @@ import { db } from "@/lib/prisma";
 // GET /api/documents/me - User fetches their own documents
 export const GET = withAuth(async (request: NextRequest, context, user) => {
   try {
-    const documents = await prisma.document.findMany({
+    const documents = await db.document.findMany({
       where: { userId: user.id },
       orderBy: { createdAt: "desc" },
       select: {
