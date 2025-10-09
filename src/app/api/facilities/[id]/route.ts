@@ -1,10 +1,12 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/prisma";
 import { z } from "zod";
+import { UserRole } from "@prisma/client"; // ✅ import your enum
 
 // TODO: integrate real auth
 async function getSessionUser() {
-  return { id: "transformer-user-id", role: "TRANSFORMER" as const };
+  // ✅ role is typed as UserRole, so it can be ADMIN, TRANSFORMER, etc.
+  return { id: "transformer-user-id", role: UserRole.TRANSFORMER };
 }
 
 const patchSchema = z.object({
