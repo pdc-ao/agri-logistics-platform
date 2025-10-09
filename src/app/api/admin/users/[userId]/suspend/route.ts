@@ -1,17 +1,16 @@
-// src/app/api/admin/users/[userId]/suspend/route.ts
 import { NextResponse } from "next/server";
 import { db } from "@/lib/prisma";
 import { requireAdmin } from "@/lib/auth";
 
 export async function POST(
   request: Request,
-  context: { params: { userId: string } }
+  { params }: { params: Promise<{ userId: string }> }
 ) {
   try {
     await requireAdmin();
 
     const { reason, duration } = await request.json();
-    const { userId } = context.params;
+    const { userId } = await params; // 👈 note the await
 
     if (!reason) {
       return NextResponse.json(
@@ -20,15 +19,9 @@ export async function POST(
       );
     }
 
-    const user = await db.user.findUnique({
-      where: { id: userId },
-    });
-
+    const user = await db.user.findUnique({ where: { id: userId } });
     if (!user) {
-      return NextResponse.json(
-        { error: "Usuário não encontrado" },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: "Usuário não encontrado" }, { status: 404 });
     }
 
     if (user.role === "ADMIN") {
