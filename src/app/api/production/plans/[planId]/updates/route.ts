@@ -20,8 +20,7 @@ const schema = z.object({
 
 export async function POST(
   req: Request,
-  { params }: { params: { planId: string } }
-) {
+  { params }: { params: Promise<{ planId: string }> }) {
   const session = await getServerSession(authOptions);
   if (!session?.user?.id)
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
