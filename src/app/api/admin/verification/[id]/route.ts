@@ -1,5 +1,4 @@
-// src/app/api/admin/verification/[id]/route.ts
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/prisma";
 import { z } from "zod";
 
@@ -17,8 +16,8 @@ const patchSchema = z.object({
 });
 
 export async function PATCH(
-  request: Request,
-  { params }: { params: Promise<{ id: string }> } // 👈 FIXED
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const role = await getSessionUserRole();
@@ -30,11 +29,9 @@ export async function PATCH(
     const body = await request.json();
     const parsed = patchSchema.parse(body);
 
-    const { id } = await params; // 👈 FIXED: await params
+    const { id } = await params;
 
-    const doc = await db.businessDocument.findUnique({
-      where: { id },
-    });
+    const doc = await db.businessDocument.findUnique({ where: { id } });
     if (!doc) {
       return NextResponse.json({ error: "Document not found" }, { status: 404 });
     }

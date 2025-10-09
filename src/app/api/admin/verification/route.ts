@@ -1,16 +1,16 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/prisma";
 import { requireAdmin } from "@/lib/auth";
 
-export async function PATCH(
-  request: Request,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function PATCH(request: NextRequest) {
   try {
     await requireAdmin();
 
-    const { status, details } = await request.json();
-    const { id } = await params; // 👈 note the await
+    const { id, status, details } = await request.json();
+
+    if (!id) {
+      return NextResponse.json({ error: "Missing id" }, { status: 400 });
+    }
 
     if (!status || !["VERIFIED", "REJECTED", "PENDING"].includes(status)) {
       return NextResponse.json({ error: "Status inválido" }, { status: 400 });
