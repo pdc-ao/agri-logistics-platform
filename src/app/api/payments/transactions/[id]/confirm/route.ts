@@ -1,23 +1,23 @@
 // src/app/api/payments/transactions/[id]/confirm/route.ts
-import { NextResponse } from 'next/server';
-import { db } from '@/lib/prisma';
-import { requireAuth } from '@/lib/auth';
+import { NextResponse } from "next/server";
+import { db } from "@/lib/prisma";
+import { requireAuth } from "@/lib/auth";
 
 export async function POST(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> } // 👈 FIXED
 ) {
   try {
     const session = await requireAuth();
-    const { id: transactionId } = params;
+    const { id: transactionId } = await params; // 👈 FIXED
 
     const transaction = await db.paymentTransaction.findUnique({
-      where: { id: transactionId }
+      where: { id: transactionId },
     });
 
     if (!transaction) {
       return NextResponse.json(
-        { error: 'Transação não encontrada' },
+        { error: "Transação não encontrada" },
         { status: 404 }
       );
     }
@@ -27,10 +27,7 @@ export async function POST(
     const isSeller = transaction.sellerId === session.user.id;
 
     if (!isBuyer && !isSeller) {
-      return NextResponse.json(
-        { error: 'Sem permissão' },
-        { status: 403 }
-      );
+      return NextResponse.json({ error: "Sem permissão" }, { status: 403 });
     }
 
     // Update confirmation
@@ -39,8 +36,8 @@ export async function POST(
       data: {
         ...(isBuyer && { buyerConfirmed: true }),
         ...(isSeller && { sellerConfirmed: true }),
-        status: isSeller ? 'SELLER_CONFIRMED' : transaction.status
-      }
+        status: isSeller ? "SELLER_CONFIRMED" : transaction.status,
+      },
     });
 
     // If both confirmed, release payment
@@ -50,9 +47,9 @@ export async function POST(
         await prisma.paymentTransaction.update({
           where: { id: transactionId },
           data: {
-            status: 'RELEASED',
-            releasedAt: new Date()
-          }
+            status: "RELEASED",
+            releasedAt: new Date(),
+          },
         });
 
         // Credit seller's wallet
@@ -60,20 +57,20 @@ export async function POST(
           where: { userId: transaction.sellerId },
           create: {
             userId: transaction.sellerId,
-            balance: Number(transaction.amount)
+            balance: Number(transaction.amount),
           },
           update: {
-            balance: { increment: Number(transaction.amount) }
-          }
+            balance: { increment: Number(transaction.amount) },
+          },
         });
       });
     }
 
     return NextResponse.json(updatedTransaction);
   } catch (error) {
-    console.error('Error confirming transaction:', error);
+    console.error("Error confirming transaction:", error);
     return NextResponse.json(
-      { error: 'Falha ao confirmar transação' },
+      { error: "Falha ao confirmar transação" },
       { status: 500 }
     );
   }
