@@ -1,15 +1,15 @@
-import NextAuth from 'next-auth';
-import CredentialsProvider from 'next-auth/providers/credentials';
-import { db } from '@/lib/prisma';
-import bcrypt from 'bcryptjs';
+import NextAuth from "next-auth";
+import CredentialsProvider from "next-auth/providers/credentials";
+import { db } from "@/lib/prisma";
+import bcrypt from "bcryptjs";
 
 const handler = NextAuth({
   providers: [
     CredentialsProvider({
-      name: 'credentials',
+      name: "credentials",
       credentials: {
-        email: { label: 'Email', type: 'email' },
-        password: { label: 'Password', type: 'password' }
+        email: { label: "Email", type: "email" },
+        password: { label: "Password", type: "password" },
       },
       async authorize(credentials) {
         if (!credentials?.email || !credentials?.password) {
@@ -18,19 +18,17 @@ const handler = NextAuth({
 
         try {
           const user = await db.user.findUnique({
-            where: { email: credentials.email }
+            where: { email: credentials.email },
           });
 
-          if (!user) {
-            return null;
-          }
+          if (!user) return null;
 
-        
-          const isValid = await bcrypt.compare(credentials.password, user.passwordHash);
+          const isValid = await bcrypt.compare(
+            credentials.password,
+            user.passwordHash
+          );
 
-          if (!isValid) {
-            return null;
-          }
+          if (!isValid) return null;
 
           return {
             id: user.id,
@@ -39,15 +37,15 @@ const handler = NextAuth({
             role: user.role,
           };
         } catch (error) {
-          console.error('Auth error:', error);
+          console.error("Auth error:", error);
           return null;
         }
-      }
-    })
+      },
+    }),
   ],
   pages: {
-    signIn: '/auth/login',
-    signUp: '/auth/register',
+    signIn: "/auth/login",
+    newUser: "/auth/register", // ✅ correct key
   },
   callbacks: {
     async jwt({ token, user }) {
@@ -58,15 +56,15 @@ const handler = NextAuth({
     },
     async session({ session, token }) {
       if (token) {
-        session.user.id = token.sub;
-        session.user.role = token.role;
+        session.user.id = token.sub as string;
+        session.user.role = token.role as string;
       }
       return session;
-    }
+    },
   },
   session: {
-    strategy: 'jwt'
-  }
+    strategy: "jwt",
+  },
 });
 
 export { handler as GET, handler as POST };
