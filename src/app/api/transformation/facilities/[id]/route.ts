@@ -8,7 +8,7 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { id } = params;
+    const { id } = await params;
 
     const facility = await db.transformationFacility.findUnique({
       where: { id },
@@ -51,7 +51,7 @@ export async function PUT(
 ) {
   try {
     const session = await requireAuth();
-    const { id } = params;
+    const { id } = await params;
     const body = await request.json();
 
     const existingFacility = await db.transformationFacility.findUnique({
@@ -113,7 +113,7 @@ export async function DELETE(
 ) {
   try {
     const session = await requireAuth();
-    const { id } = params;
+    const { id } = await params;
 
     const facility = await db.transformationFacility.findUnique({
       where: { id }
