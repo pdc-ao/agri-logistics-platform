@@ -1,54 +1,34 @@
-// src/app/api/admin/users/[userId]/verification/route.ts
 import { NextResponse } from "next/server";
 import { db } from "@/lib/prisma";
 import { requireAdmin } from "@/lib/auth";
 
-export async function PUT(
+export async function PATCH(
   request: Request,
-  { params }: { params: Promise<{ userId: string }> }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     await requireAdmin();
 
     const { status, details } = await request.json();
-    const { userId } = await params; // 👈 note the await
+    const { id } = await params; // 👈 note the await
 
     if (!status || !["VERIFIED", "REJECTED", "PENDING"].includes(status)) {
       return NextResponse.json({ error: "Status inválido" }, { status: 400 });
     }
 
-    const user = await db.user.findUnique({
-      where: { id: userId },
-    });
-
-    if (!user) {
-      return NextResponse.json({ error: "Usuário não encontrado" }, { status: 404 });
-    }
-
-    const updatedUser = await db.user.update({
-      where: { id: userId },
+    const verification = await db.verification.update({
+      where: { id },
       data: {
-        verificationStatus: status,
-        isVerified: status === "VERIFIED",
-        verificationDetails: details || null,
-      },
-      select: {
-        id: true,
-        username: true,
-        email: true,
-        fullName: true,
-        role: true,
-        verificationStatus: true,
-        isVerified: true,
-        verificationDetails: true,
+        status,
+        details: details || null,
       },
     });
 
-    return NextResponse.json(updatedUser);
+    return NextResponse.json(verification);
   } catch (error) {
-    console.error("Error updating verification status:", error);
+    console.error("Error updating verification:", error);
     return NextResponse.json(
-      { error: "Falha ao atualizar status de verificação" },
+      { error: "Falha ao atualizar verificação" },
       { status: 500 }
     );
   }
