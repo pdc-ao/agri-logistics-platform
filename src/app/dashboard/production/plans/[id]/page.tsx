@@ -1,31 +1,38 @@
-{ db }import { StatusBadge } from '@/components/ui/status-badge';
+import { StatusBadge } from '@/components/ui/status-badge';
 import PlanTabs from './tabs';
 import { notFound } from 'next/navigation';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
+import { db } from '@/lib/prisma'; // make sure you import db
 
 interface Props {
-  params: { id: string };
+  params: Promise<{ id: string }>;   // ✅ FIXED: params is a Promise
   searchParams?: { tab?: string };
 }
 
 export default async function PlanDetailPage({ params, searchParams }: Props) {
+  const { id } = await params;       // ✅ FIXED: await params
+
   const session = await getServerSession(authOptions);
-  const plan = await prisma.productionPlan.findUnique({
-    where: { id: params.id },
+
+  const plan = await db.productionPlan.findUnique({
+    where: { id },
     include: {
       schedules: { orderBy: { scheduledDate: 'asc' } },
-      updates: { orderBy: { createdAt: 'desc' }, include: { user: { select: { username: true, id: true } } } },
+      updates: {
+        orderBy: { createdAt: 'desc' },
+        include: { user: { select: { username: true, id: true } } },
+      },
       preOrders: {
         orderBy: { createdAt: 'desc' },
-        include: { customer: { select: { id: true, username: true } } }
+        include: { customer: { select: { id: true, username: true } } },
       },
       subscribers: {
         include: { user: { select: { id: true, username: true } } },
-        orderBy: { subscribedAt: 'desc' }
+        orderBy: { subscribedAt: 'desc' },
       },
-      producer: { select: { id: true, username: true } }
-    }
+      producer: { select: { id: true, username: true } },
+    },
   });
 
   if (!plan) return notFound();
@@ -39,10 +46,13 @@ export default async function PlanDetailPage({ params, searchParams }: Props) {
         <div>
           <h1 className="text-xl font-semibold flex items-center gap-2">
             {plan.productName}
-            {plan.variety && <span className="text-neutral-500 text-sm">({plan.variety})</span>}
+            {plan.variety && (
+              <span className="text-neutral-500 text-sm">({plan.variety})</span>
+            )}
           </h1>
           <p className="text-xs text-neutral-500">
-            Producer: {plan.producer.username} • Area: {plan.areaSize} {plan.areaUnit}
+            Producer: {plan.producer.username} • Area: {plan.areaSize}{' '}
+            {plan.areaUnit}
           </p>
         </div>
         <div className="flex items-center gap-3">
