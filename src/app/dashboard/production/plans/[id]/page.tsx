@@ -3,15 +3,17 @@ import PlanTabs from './tabs';
 import { notFound } from 'next/navigation';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
-import { db } from '@/lib/prisma'; // make sure you import db
+import { db } from '@/lib/prisma';
 
 interface Props {
-  params: Promise<{ id: string }>;   // ✅ FIXED: params is a Promise
-  searchParams?: { tab?: string };
+  params: Promise<{ id: string }>;
+  searchParams?: Promise<{ tab?: string }>;
 }
 
 export default async function PlanDetailPage({ params, searchParams }: Props) {
-  const { id } = await params;       // ✅ FIXED: await params
+  const { id } = await params;
+  const resolvedSearch = searchParams ? await searchParams : {};
+  const activeTab = resolvedSearch.tab || 'overview';
 
   const session = await getServerSession(authOptions);
 
@@ -37,7 +39,6 @@ export default async function PlanDetailPage({ params, searchParams }: Props) {
 
   if (!plan) return notFound();
 
-  const activeTab = searchParams?.tab || 'overview';
   const isOwner = session?.user?.id === plan.producerId;
 
   return (
@@ -51,8 +52,7 @@ export default async function PlanDetailPage({ params, searchParams }: Props) {
             )}
           </h1>
           <p className="text-xs text-neutral-500">
-            Producer: {plan.producer.username} • Area: {plan.areaSize}{' '}
-            {plan.areaUnit}
+            Producer: {plan.producer.username} • Area: {plan.areaSize} {plan.areaUnit}
           </p>
         </div>
         <div className="flex items-center gap-3">
