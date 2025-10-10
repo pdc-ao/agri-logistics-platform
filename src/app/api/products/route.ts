@@ -1,4 +1,3 @@
-//api/products/route.ts
 import { NextRequest, NextResponse } from "next/server";
 import { withAuth } from "@/lib/session-validation";
 import { db } from "@/lib/prisma";
@@ -36,8 +35,8 @@ export const POST = withAuth(async (request: NextRequest, context, user) => {
       );
     }
 
-    // Ensure user is a valid PRODUCER
-    const producer = await prisma.user.findFirst({
+    // ✅ use db instead of prisma
+    const producer = await db.user.findFirst({
       where: {
         id: user.id,
         role: "PRODUCER",
@@ -49,7 +48,8 @@ export const POST = withAuth(async (request: NextRequest, context, user) => {
       return NextResponse.json({ error: "Unauthorized producer" }, { status: 403 });
     }
 
-    const product = await prisma.productListing.create({
+    // ✅ use db instead of prisma
+    const product = await db.productListing.create({
       data: {
         ...validation.data!,
         producerId: user.id,
@@ -99,8 +99,9 @@ export const GET = async (request: NextRequest) => {
       }),
     };
 
+    // ✅ use db instead of prisma
     const [products, total] = await Promise.all([
-      prisma.productListing.findMany({
+      db.productListing.findMany({
         where: whereClause,
         skip,
         take: limit,
@@ -121,7 +122,7 @@ export const GET = async (request: NextRequest) => {
           },
         },
       }),
-      prisma.productListing.count({ where: whereClause }),
+      db.productListing.count({ where: whereClause }),
     ]);
 
     return NextResponse.json({
