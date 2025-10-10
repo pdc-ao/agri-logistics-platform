@@ -1,18 +1,14 @@
-// src/app/api/payments/transactions/[id]/release/route.ts
 import { NextResponse } from 'next/server';
 import { db } from '@/lib/prisma';
 import { requireAuth } from '@/lib/auth';
 
-export async function POST(
-  request: Request,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function POST(request: Request, context: { params: { id: string } }) {
   try {
     const session = await requireAuth();
-    const { id: transactionId } = params;
+    const transactionId = context.params.id; // ✅ access params safely
 
     const transaction = await db.paymentTransaction.findUnique({
-      where: { id: transactionId }
+      where: { id: transactionId },
     });
 
     if (!transaction) {
@@ -37,8 +33,8 @@ export async function POST(
         data: {
           status: 'RELEASED',
           releasedAt: new Date(),
-          buyerConfirmed: true
-        }
+          buyerConfirmed: true,
+        },
       });
 
       // Credit seller's wallet
@@ -46,11 +42,11 @@ export async function POST(
         where: { userId: transaction.sellerId },
         create: {
           userId: transaction.sellerId,
-          balance: Number(transaction.amount)
+          balance: Number(transaction.amount),
         },
         update: {
-          balance: { increment: Number(transaction.amount) }
-        }
+          balance: { increment: Number(transaction.amount) },
+        },
       });
     });
 
