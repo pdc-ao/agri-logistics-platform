@@ -2,15 +2,11 @@ import { NextResponse } from "next/server";
 import { db } from "@/lib/prisma";
 import { requireAuth } from "@/lib/auth";
 
-// The correct signature: (req: Request, context: { params: { id: string } })
-export async function POST(
-  request: Request,
-  context: { params: { id: string } }
-) {
+export async function POST(request: Request, context: any) {
   try {
     const session = await requireAuth();
     const { reason } = await request.json();
-    const transactionId = context.params.id; // ✅ access params this way
+    const transactionId = context.params.id; // ✅ works without strict typing
 
     const transaction = await db.paymentTransaction.findUnique({
       where: { id: transactionId },
