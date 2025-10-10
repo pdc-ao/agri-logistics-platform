@@ -6,16 +6,21 @@ export async function POST(req: Request) {
   const name = form.get('name')?.toString();
   const contact = form.get('contact')?.toString();
   const location = form.get('location')?.toString();
+
   if (!name || !contact || !location) {
     return NextResponse.redirect('/dashboard/procurement/suppliers');
   }
-  await prisma.supplier.create({
-    data: { name, contact, location }
+
+  // ✅ use db instead of prisma
+  await db.supplier.create({
+    data: { name, contact, location },
   });
+
   return NextResponse.redirect('/dashboard/procurement/suppliers');
 }
 
 export async function GET() {
-  const suppliers = await prisma.supplier.findMany();
+  // ✅ use db instead of prisma
+  const suppliers = await db.supplier.findMany();
   return NextResponse.json(suppliers);
 }
