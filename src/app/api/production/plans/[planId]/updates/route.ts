@@ -15,29 +15,34 @@ const schema = z.object({
   currentGrowthStage: z.string().optional(),
   healthStatus: z.string().optional(),
   quantityAdjustment: z.number().optional(),
-  dateAdjustment: z.string().optional()
+  dateAdjustment: z.string().optional(),
 });
 
-export async function POST(
-  req: Request,
-  { params }: { params: Promise<{ planId: string }> }) {
-  const session = await getServerSession(authOptions);
-  if (!session?.user?.id)
+export async function POST(req: Request, context: any) {
+  const session = await getServerSession(authOptions); // ✅ define session
+  if (!session?.user?.id) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
+  const { planId } = await context.params; // ✅ await params
 
   const body = await req.json().catch(() => null);
   const parsed = schema.safeParse(body);
-  if (!parsed.success)
+  if (!parsed.success) {
     return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
+  }
 
-  const plan = await prisma.productionPlan.findFirst({
-    where: { id: params.planId, producerId: session.user.id }
+  // ✅ use db instead of prisma
+  const plan = await db.productionPlan.findFirst({
+    where: { id: planId, producerId: session.user.id },
   });
-  if (!plan) return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+  if (!plan) {
+    return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+  }
 
-  const update = await prisma.productionUpdate.create({
+  const update = await db.productionUpdate.create({
     data: {
-      productionPlanId: params.planId,
+      productionPlanId: planId,
       updateType: parsed.data.updateType,
       title: parsed.data.title,
       description: parsed.data.description,
@@ -48,8 +53,8 @@ export async function POST(
       dateAdjustment: parsed.data.dateAdjustment
         ? new Date(parsed.data.dateAdjustment)
         : undefined,
-      createdBy: session.user.id
-    }
+      createdBy: session.user.id,
+    },
   });
 
   return NextResponse.json(update, { status: 201 });
