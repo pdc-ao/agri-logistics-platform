@@ -1,19 +1,18 @@
-// src/app/api/payments/transactions/[id]/dispute/route.ts
 import { NextResponse } from 'next/server';
 import { db } from '@/lib/prisma';
 import { requireAuth } from '@/lib/auth';
 
 export async function POST(
   request: Request,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: { id: string } }   // ✅ plain object, not Promise
 ) {
   try {
     const session = await requireAuth();
     const { reason } = await request.json();
-    const { id: transactionId } = params;
+    const { id: transactionId } = params;   // ✅ works now
 
     const transaction = await db.paymentTransaction.findUnique({
-      where: { id: transactionId }
+      where: { id: transactionId },
     });
 
     if (!transaction) {
@@ -37,8 +36,8 @@ export async function POST(
     const updatedTransaction = await db.paymentTransaction.update({
       where: { id: transactionId },
       data: {
-        status: 'DISPUTED'
-      }
+        status: 'DISPUTED',
+      },
     });
 
     // TODO: In production, notify admins and create dispute record
