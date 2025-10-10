@@ -21,13 +21,14 @@ const schema = z.object({
   description: z.string().optional(),
   farmingMethod: z.string().optional(),
   certifications: z.array(z.string()).optional().default([]),
-  images: z.array(z.string()).optional().default([])
+  images: z.array(z.string()).optional().default([]),
 });
 
 export async function POST(req: Request) {
   const session = await getServerSession(authOptions);
-  if (!session?.user?.id)
+  if (!session?.user?.id) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
 
   // Optional: ensure user has PRODUCER role
   // if (session.user.role !== 'PRODUCER') return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
@@ -39,7 +40,9 @@ export async function POST(req: Request) {
   }
 
   const data = parsed.data;
-  const plan = await prisma.productionPlan.create({
+
+  // ✅ use db instead of prisma
+  const plan = await db.productionPlan.create({
     data: {
       producerId: session.user.id,
       productName: data.productName,
@@ -58,8 +61,8 @@ export async function POST(req: Request) {
       description: data.description,
       farmingMethod: data.farmingMethod,
       certifications: data.certifications,
-      images: data.images
-    }
+      images: data.images,
+    },
   });
 
   return NextResponse.json(plan, { status: 201 });
