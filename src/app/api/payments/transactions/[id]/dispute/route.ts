@@ -1,15 +1,16 @@
-import { NextResponse } from 'next/server';
-import { db } from '@/lib/prisma';
-import { requireAuth } from '@/lib/auth';
+import { NextResponse } from "next/server";
+import { db } from "@/lib/prisma";
+import { requireAuth } from "@/lib/auth";
 
+// The correct signature: (req: Request, context: { params: { id: string } })
 export async function POST(
   request: Request,
-  { params }: { params: { id: string } }   // ✅ plain object, not Promise
+  context: { params: { id: string } }
 ) {
   try {
     const session = await requireAuth();
     const { reason } = await request.json();
-    const { id: transactionId } = params;   // ✅ works now
+    const transactionId = context.params.id; // ✅ access params this way
 
     const transaction = await db.paymentTransaction.findUnique({
       where: { id: transactionId },
@@ -17,7 +18,7 @@ export async function POST(
 
     if (!transaction) {
       return NextResponse.json(
-        { error: 'Transação não encontrada' },
+        { error: "Transação não encontrada" },
         { status: 404 }
       );
     }
@@ -27,27 +28,22 @@ export async function POST(
     const isSeller = transaction.sellerId === session.user.id;
 
     if (!isBuyer && !isSeller) {
-      return NextResponse.json(
-        { error: 'Sem permissão' },
-        { status: 403 }
-      );
+      return NextResponse.json({ error: "Sem permissão" }, { status: 403 });
     }
 
     const updatedTransaction = await db.paymentTransaction.update({
       where: { id: transactionId },
-      data: {
-        status: 'DISPUTED',
-      },
+      data: { status: "DISPUTED" },
     });
 
-    // TODO: In production, notify admins and create dispute record
+    // TODO: notify admins, create dispute record
     // await notifyAdmins(transactionId, reason);
 
     return NextResponse.json(updatedTransaction);
   } catch (error) {
-    console.error('Error disputing transaction:', error);
+    console.error("Error disputing transaction:", error);
     return NextResponse.json(
-      { error: 'Falha ao abrir disputa' },
+      { error: "Falha ao abrir disputa" },
       { status: 500 }
     );
   }
