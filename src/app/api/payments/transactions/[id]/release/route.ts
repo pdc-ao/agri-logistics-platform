@@ -1,11 +1,11 @@
-import { NextResponse } from 'next/server';
-import { db } from '@/lib/prisma';
-import { requireAuth } from '@/lib/auth';
+import { NextResponse } from "next/server";
+import { db } from "@/lib/prisma";
+import { requireAuth } from "@/lib/auth";
 
-export async function POST(request: Request, context: { params: { id: string } }) {
+export async function POST(request: Request, context: any) {
   try {
     const session = await requireAuth();
-    const transactionId = context.params.id; // ✅ access params safely
+    const transactionId = context.params.id; // ✅ safe access
 
     const transaction = await db.paymentTransaction.findUnique({
       where: { id: transactionId },
@@ -13,7 +13,7 @@ export async function POST(request: Request, context: { params: { id: string } }
 
     if (!transaction) {
       return NextResponse.json(
-        { error: 'Transação não encontrada' },
+        { error: "Transação não encontrada" },
         { status: 404 }
       );
     }
@@ -21,7 +21,7 @@ export async function POST(request: Request, context: { params: { id: string } }
     // Only buyer can manually release payment
     if (transaction.buyerId !== session.user.id) {
       return NextResponse.json(
-        { error: 'Apenas o comprador pode liberar o pagamento' },
+        { error: "Apenas o comprador pode liberar o pagamento" },
         { status: 403 }
       );
     }
@@ -31,7 +31,7 @@ export async function POST(request: Request, context: { params: { id: string } }
       await prisma.paymentTransaction.update({
         where: { id: transactionId },
         data: {
-          status: 'RELEASED',
+          status: "RELEASED",
           releasedAt: new Date(),
           buyerConfirmed: true,
         },
@@ -52,9 +52,9 @@ export async function POST(request: Request, context: { params: { id: string } }
 
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error('Error releasing payment:', error);
+    console.error("Error releasing payment:", error);
     return NextResponse.json(
-      { error: 'Falha ao liberar pagamento' },
+      { error: "Falha ao liberar pagamento" },
       { status: 500 }
     );
   }
