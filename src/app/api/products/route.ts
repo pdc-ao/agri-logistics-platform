@@ -35,7 +35,7 @@ export const POST = withAuth(async (request: NextRequest, context, user) => {
       );
     }
 
-    // ✅ use db instead of prisma
+    // Ensure user is a valid PRODUCER
     const producer = await db.user.findFirst({
       where: {
         id: user.id,
@@ -48,10 +48,21 @@ export const POST = withAuth(async (request: NextRequest, context, user) => {
       return NextResponse.json({ error: "Unauthorized producer" }, { status: 403 });
     }
 
-    // ✅ use db instead of prisma
+    const data = validation.data!;
+
+    // Map request fields → Prisma model fields
     const product = await db.productListing.create({
       data: {
-        ...validation.data!,
+        title: data.name,                       // map → title
+        description: data.description,
+        category: data.category,
+        subcategory: data.subcategory,
+        pricePerUnit: data.price,               // map → pricePerUnit
+        quantityAvailable: data.quantity,       // map → quantityAvailable
+        unitOfMeasure: data.unit,               // map → unitOfMeasure
+        currency: "AOA",                        // default
+        locationAddress: data.location,
+        imagesUrls: data.images,                // Json? field
         producerId: user.id,
         status: "Active",
       },
@@ -99,7 +110,6 @@ export const GET = async (request: NextRequest) => {
       }),
     };
 
-    // ✅ use db instead of prisma
     const [products, total] = await Promise.all([
       db.productListing.findMany({
         where: whereClause,
