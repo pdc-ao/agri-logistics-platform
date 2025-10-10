@@ -5,12 +5,14 @@ import { authOptions } from '@/lib/auth';
 
 export async function GET() {
   const session = await getServerSession(authOptions);
-  if (!session?.user?.id)
+  if (!session?.user?.id) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
 
-  const user = await prisma.user.findUnique({
+  // ✅ use db instead of prisma
+  const user = await db.user.findUnique({
     where: { id: session.user.id },
-    select: { notificationPreferences: true }
+    select: { notificationPreferences: true },
   });
 
   return NextResponse.json(user?.notificationPreferences || {});
@@ -18,13 +20,16 @@ export async function GET() {
 
 export async function PUT(req: Request) {
   const session = await getServerSession(authOptions);
-  if (!session?.user?.id)
+  if (!session?.user?.id) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
 
   const prefs = await req.json().catch(() => ({}));
-  const updated = await prisma.user.update({
+
+  // ✅ use db instead of prisma
+  const updated = await db.user.update({
     where: { id: session.user.id },
-    data: { notificationPreferences: prefs }
+    data: { notificationPreferences: prefs },
   });
 
   return NextResponse.json(updated.notificationPreferences || {});
