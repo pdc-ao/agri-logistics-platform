@@ -10,7 +10,7 @@ async function getSessionUser() {
 const createSchema = z.object({
   facilityName: z.string().min(2),
   facilityType: z.string().optional(),
-  capacity: z.number().optional(),
+  capacity: z.number().nullable().optional(),   // ✅ allow null explicitly
   capacityUnit: z.string().optional(),
   addressLine1: z.string().min(3),
   city: z.string().min(2),
@@ -52,19 +52,23 @@ export async function POST(request: Request) {
     const body = await request.json();
     const parsed = createSchema.parse(body);
 
-    const created = await db.transformationFacility.create({
-      data: {
-        ownerId: session.id,
-        facilityName: parsed.facilityName,
-        facilityType: parsed.facilityType,
-        capacity: parsed.capacity,
-        capacityUnit: parsed.capacityUnit,
-        addressLine1: parsed.addressLine1,
-        city: parsed.city,
-        country: parsed.country,
-        description: parsed.description,
-      },
-    });
+    // ✅ Build data safely, omit undefined
+    const data: any = {
+      ownerId: session.id,
+      facilityName: parsed.facilityName,
+      facilityType: parsed.facilityType,
+      capacityUnit: parsed.capacityUnit,
+      addressLine1: parsed.addressLine1,
+      city: parsed.city,
+      country: parsed.country,
+      description: parsed.description,
+    };
+
+    if (parsed.capacity !== undefined) {
+      data.capacity = parsed.capacity; // number or null
+    }
+
+    const created = await db.transformationFacility.create({ data });
 
     return NextResponse.json(created, { status: 201 });
   } catch (err) {
