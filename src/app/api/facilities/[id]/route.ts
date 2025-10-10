@@ -60,7 +60,7 @@ export async function PATCH(
       return NextResponse.json({ error: "Not found" }, { status: 404 });
     }
 
-    if (existing.ownerId !== session.id && session.role !== "ADMIN") {
+    if (existing.ownerId !== session.id && session.role !== UserRole.ADMIN) {
       return NextResponse.json({ error: "Not authorized" }, { status: 403 });
     }
 
