@@ -12,38 +12,53 @@ const schema = z.object({
     'POST_HARVEST','CUSTOM'
   ]),
   scheduledDate: z.string(),
-  notifyBefore: z.number().int().min(0).max(90).default(0)
+  notifyBefore: z.number().int().min(0).max(90).default(0),
 });
 
-export async function POST(
-  req: Request,
-  { params }: { params: Promise<{ planId: string }> }) {
+export async function POST(req: Request, context: any) {
   const session = await getServerSession(authOptions);
-  if (!session?.user?.id)
+  if (!session?.user?.id) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
 
   const body = await req.json().catch(() => null);
   const parsed = schema.safeParse(body);
-  if (!parsed.success)
+  if (!parsed.success) {
     return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
+  }
 
-  const plan = await prisma.productionPlan.findFirst({
-    where: { id: params.planId, producerId: session.user.id }
+  // ✅ await params safely
+  const { planId } = await context.params;
+
+  // ✅ use db instead of prisma
+  const plan = await db.productionPlan.findFirst({
+    where: { id: planId, producerId: session.user.id },
   });
-  if (!plan) return NextResponse.json({ error: 'Not found or forbidden' }, { status: 404 });
 
-  const schedule = await prisma.productionSchedule.create({
+  if (!plan) {
+    return NextResponse.json({ error: 'Not found or forbidden' }, { status: 404 });
+  }
+
+  // ✅ use db instead of prisma
+  const schedule = await db.productionSchedule.create({
     data: {
-      productionPlanId: params.planId,
+      productionPlanId: planId,
       milestoneName: parsed.data.milestoneName,
       milestoneType: parsed.data.milestoneType,
       scheduledDate: new Date(parsed.data.scheduledDate),
-      notifyBefore: parsed.data.notifyBefore
-    }
+      notifyBefore: parsed.data.notifyBefore,
+    },
   });
 
   // Optional: audit log
-  // await prisma.auditLog.create({ data: { action: 'CREATE_SCHEDULE', entityType: 'ProductionSchedule', entityId: schedule.id, userId: session.user.id } });
+  // await db.auditLog.create({
+  //   data: {
+  //     action: 'CREATE_SCHEDULE',
+  //     entityType: 'ProductionSchedule',
+  //     entityId: schedule.id,
+  //     userId: session.user.id,
+  //   },
+  // });
 
   return NextResponse.json(schedule, { status: 201 });
 }
