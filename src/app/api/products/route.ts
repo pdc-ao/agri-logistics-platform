@@ -4,6 +4,8 @@ import { db } from "@/lib/prisma";
 import { createProductSchema, validateRequest } from "@/lib/validation";
 import { rateLimit } from "@/lib/rate-limit";
 import { requirePermission } from "@/lib/rbac-middleware";
+import { Prisma } from "@prisma/client";
+
 
 const productRateLimit = rateLimit({
   windowMs: 60000,
@@ -89,13 +91,28 @@ export const GET = async (request: NextRequest) => {
     const search = searchParams.get("q") || undefined;
     const sort = searchParams.get("sort") || "date_desc";
 
-    const orderBy =
-      sort === "price_asc" ? { pricePerUnit: "asc" } :
-      sort === "price_desc" ? { pricePerUnit: "desc" } :
-      sort === "qty_desc" ? { quantityAvailable: "desc" } :
-      sort === "qty_asc" ? { quantityAvailable: "asc" } :
-      sort === "date_asc" ? { createdAt: "asc" } :
-      { createdAt: "desc" };
+    let orderBy: Prisma.ProductListingOrderByWithRelationInput;
+
+switch (sort) {
+  case "price_asc":
+    orderBy = { pricePerUnit: "asc" };
+    break;
+  case "price_desc":
+    orderBy = { pricePerUnit: "desc" };
+    break;
+  case "qty_desc":
+    orderBy = { quantityAvailable: "desc" };
+    break;
+  case "qty_asc":
+    orderBy = { quantityAvailable: "asc" };
+    break;
+  case "date_asc":
+    orderBy = { createdAt: "asc" };
+    break;
+  default:
+    orderBy = { createdAt: "desc" };
+}
+
 
     const whereClause: any = {
       status: "Active",
