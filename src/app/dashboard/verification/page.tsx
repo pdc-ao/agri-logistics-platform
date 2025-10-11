@@ -11,7 +11,7 @@ export default async function VerificationPage() {
   }
 
   // Fetch user data from database
-  const user = await db.user.findUnique({
+  const userData = await db.user.findUnique({
     where: { id: session.user.id },
     select: {
       id: true,
@@ -25,13 +25,27 @@ export default async function VerificationPage() {
       phoneNumber: true,
       entityType: true,
       companyName: true,
-      // Add any other fields needed by VerificationSystem
     }
   });
 
-  if (!user) {
+  if (!userData) {
     redirect('/auth/login');
   }
+
+  // Transform null values to undefined for VerificationSystem
+  const user = {
+    id: userData.id,
+    username: userData.username,
+    email: userData.email,
+    fullName: userData.fullName ?? undefined,
+    role: userData.role,
+    isVerified: userData.isVerified,
+    verificationStatus: userData.verificationStatus,
+    verificationDetails: userData.verificationDetails ?? undefined,
+    phoneNumber: userData.phoneNumber ?? undefined,
+    entityType: userData.entityType,
+    companyName: userData.companyName ?? undefined,
+  };
 
   return <VerificationSystem user={user} />;
 }
