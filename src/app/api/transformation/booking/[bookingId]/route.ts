@@ -24,7 +24,7 @@ export const GET = withAuth(
             },
           },
           user: {
-            select: { id: true, email: true, phone: true },
+            select: { id: true, email: true, /*phone: true */},
           },
         },
       });
