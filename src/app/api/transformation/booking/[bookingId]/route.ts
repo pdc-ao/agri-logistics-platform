@@ -1,10 +1,9 @@
-// src/app/api/transformation/bookings/[bookingId]/route.ts
 import { NextRequest, NextResponse } from "next/server";
 import { withAuth } from "@/lib/session-validation";
 import { db } from "@/lib/prisma";
 import { sendNotification } from "@/lib/notifications";
 
-// GET - Get specific booking details
+// ---------------- GET ----------------
 export const GET = withAuth(
   async (
     request: NextRequest,
@@ -14,38 +13,27 @@ export const GET = withAuth(
     try {
       const { bookingId } = params;
 
-      const booking = await prisma.facilityBooking.findUnique({
+      const booking = await db.facilityBooking.findUnique({
         where: { id: bookingId },
         include: {
           facility: {
             include: {
               owner: {
-                select: {
-                  id: true,
-                  email: true,
-                  phone: true,
-                },
+                select: { id: true, email: true, phone: true },
               },
             },
           },
           user: {
-            select: {
-              id: true,
-              email: true,
-              phone: true,
-            },
+            select: { id: true, email: true, phone: true },
           },
         },
       });
 
       if (!booking) {
-        return NextResponse.json(
-          { error: "Booking not found" },
-          { status: 404 }
-        );
+        return NextResponse.json({ error: "Booking not found" }, { status: 404 });
       }
 
-      // Check authorization
+      // Authorization
       const isAuthorized =
         booking.userId === user.id ||
         booking.facility.ownerId === user.id ||
@@ -61,15 +49,12 @@ export const GET = withAuth(
       return NextResponse.json({ booking });
     } catch (error) {
       console.error("Error fetching booking:", error);
-      return NextResponse.json(
-        { error: "Failed to fetch booking" },
-        { status: 500 }
-      );
+      return NextResponse.json({ error: "Failed to fetch booking" }, { status: 500 });
     }
   }
 );
 
-// PATCH - Update booking status or details
+// ---------------- PATCH ----------------
 export const PATCH = withAuth(
   async (
     request: NextRequest,
@@ -78,27 +63,21 @@ export const PATCH = withAuth(
   ) => {
     try {
       const { bookingId } = params;
-      const { status, notes, actualStartDate, actualEndDate } =
-        await request.json();
+      const { status, notes, actualStartDate, actualEndDate } = await request.json();
 
-      const booking = await prisma.facilityBooking.findUnique({
+      const booking = await db.facilityBooking.findUnique({
         where: { id: bookingId },
         include: {
-          facility: {
-            include: { owner: true },
-          },
+          facility: { include: { owner: true } },
           user: true,
         },
       });
 
       if (!booking) {
-        return NextResponse.json(
-          { error: "Booking not found" },
-          { status: 404 }
-        );
+        return NextResponse.json({ error: "Booking not found" }, { status: 404 });
       }
 
-      // Authorization check
+      // Authorization
       const isFacilityOwner = booking.facility.ownerId === user.id;
       const isCustomer = booking.userId === user.id;
       const isAdmin = user.role === "ADMIN";
@@ -110,7 +89,7 @@ export const PATCH = withAuth(
         );
       }
 
-      // Validate status transitions
+      // Status transitions
       const validTransitions: Record<string, string[]> = {
         PENDING: ["CONFIRMED", "CANCELLED"],
         CONFIRMED: ["IN_PROGRESS", "CANCELLED"],
@@ -120,9 +99,7 @@ export const PATCH = withAuth(
       };
 
       if (status) {
-        const allowedTransitions =
-          validTransitions[booking.status] || [];
-
+        const allowedTransitions = validTransitions[booking.status] || [];
         if (!allowedTransitions.includes(status)) {
           return NextResponse.json(
             {
@@ -133,7 +110,6 @@ export const PATCH = withAuth(
           );
         }
 
-        // Only facility owner can confirm bookings
         if (status === "CONFIRMED" && !isFacilityOwner && !isAdmin) {
           return NextResponse.json(
             { error: "Only facility owner can confirm bookings" },
@@ -141,7 +117,6 @@ export const PATCH = withAuth(
           );
         }
 
-        // Only customer can cancel PENDING bookings
         if (
           status === "CANCELLED" &&
           booking.status === "PENDING" &&
@@ -156,25 +131,19 @@ export const PATCH = withAuth(
       }
 
       // Update booking
-      const updateData: any = {
-        updatedAt: new Date(),
-      };
-
+      const updateData: any = { updatedAt: new Date() };
       if (status) updateData.status = status;
       if (notes) updateData.notes = notes;
       if (actualStartDate) updateData.actualStartDate = new Date(actualStartDate);
       if (actualEndDate) updateData.actualEndDate = new Date(actualEndDate);
 
-      const updatedBooking = await prisma.facilityBooking.update({
+      const updatedBooking = await db.facilityBooking.update({
         where: { id: bookingId },
         data: updateData,
-        include: {
-          facility: true,
-          user: true,
-        },
+        include: { facility: true, user: true },
       });
 
-      // Send notifications based on status change
+      // Notifications
       if (status) {
         let notificationType = "";
         let recipientIds: string[] = [];
@@ -225,15 +194,12 @@ export const PATCH = withAuth(
       });
     } catch (error) {
       console.error("Error updating booking:", error);
-      return NextResponse.json(
-        { error: "Failed to update booking" },
-        { status: 500 }
-      );
+      return NextResponse.json({ error: "Failed to update booking" }, { status: 500 });
     }
   }
 );
 
-// DELETE - Cancel booking
+// ---------------- DELETE ----------------
 export const DELETE = withAuth(
   async (
     request: NextRequest,
@@ -243,23 +209,15 @@ export const DELETE = withAuth(
     try {
       const { bookingId } = params;
 
-      const booking = await prisma.facilityBooking.findUnique({
+      const booking = await db.facilityBooking.findUnique({
         where: { id: bookingId },
-        include: {
-          facility: {
-            include: { owner: true },
-          },
-        },
+        include: { facility: { include: { owner: true } } },
       });
 
       if (!booking) {
-        return NextResponse.json(
-          { error: "Booking not found" },
-          { status: 404 }
-        );
+        return NextResponse.json({ error: "Booking not found" }, { status: 404 });
       }
 
-      // Only customer or admin can delete their own bookings
       if (booking.userId !== user.id && user.role !== "ADMIN") {
         return NextResponse.json(
           { error: "Not authorized to delete this booking" },
@@ -267,7 +225,6 @@ export const DELETE = withAuth(
         );
       }
 
-      // Can only delete PENDING bookings
       if (booking.status !== "PENDING") {
         return NextResponse.json(
           {
@@ -277,12 +234,11 @@ export const DELETE = withAuth(
         );
       }
 
-      await prisma.facilityBooking.update({
+      await db.facilityBooking.update({
         where: { id: bookingId },
         data: { status: "CANCELLED" },
       });
 
-      // Notify facility owner
       await sendNotification({
         type: "BOOKING_CANCELLED",
         recipientIds: [booking.facility.ownerId],
@@ -299,10 +255,7 @@ export const DELETE = withAuth(
       });
     } catch (error) {
       console.error("Error cancelling booking:", error);
-      return NextResponse.json(
-        { error: "Failed to cancel booking" },
-        { status: 500 }
-      );
+      return NextResponse.json({ error: "Failed to cancel booking" }, { status: 500 });
     }
   }
 );
