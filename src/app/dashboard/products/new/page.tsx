@@ -1,7 +1,6 @@
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { redirect } from "next/navigation";
-import { db } from "@/lib/prisma";
 
 export default async function NewProductPage() {
   // ✅ Ensure user is authenticated
@@ -10,13 +9,25 @@ export default async function NewProductPage() {
     redirect("/login");
   }
 
-  // You could preload data here if needed, e.g. categories
-  const categories = [];
+  // Define categories based on your schema
+  // According to your ProductListing model, category is a string field
+  const categories = [
+    { id: "grains-cereals", name: "Grains & Cereals" },
+    { id: "fruits", name: "Fruits" },
+    { id: "vegetables", name: "Vegetables" },
+    { id: "livestock", name: "Livestock" },
+    { id: "dairy", name: "Dairy Products" },
+    { id: "poultry", name: "Poultry" },
+    { id: "fish-seafood", name: "Fish & Seafood" },
+    { id: "nuts-seeds", name: "Nuts & Seeds" },
+    { id: "spices-herbs", name: "Spices & Herbs" },
+    { id: "processed", name: "Processed Foods" },
+    { id: "other", name: "Other" },
+  ];
 
   return (
     <div className="p-6 space-y-6">
       <h1 className="text-2xl font-semibold">Create New Product</h1>
-
       <form
         action="/api/products"
         method="POST"
@@ -35,13 +46,13 @@ export default async function NewProductPage() {
         <div>
           <label className="block text-sm font-medium">Category</label>
           <select
-            name="categoryId"
+            name="category"
             required
             className="mt-1 block w-full border rounded-md p-2"
           >
             <option value="">Select a category</option>
             {categories.map((cat) => (
-              <option key={cat.id} value={cat.id}>
+              <option key={cat.id} value={cat.name}>
                 {cat.name}
               </option>
             ))}
