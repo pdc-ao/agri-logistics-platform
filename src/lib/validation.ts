@@ -22,14 +22,15 @@ export const loginSchema = z.object({
 
 // Product schemas
 export const createProductSchema = z.object({
-  name: z.string().min(2, "Name must be at least 2 characters"),
-  description: z.string().min(10, "Description must be at least 10 characters"),
+  name: z.string().min(2),
+  description: z.string().min(2),
   category: z.enum(["GRAINS", "VEGETABLES", "FRUITS", "LIVESTOCK", "DAIRY"]),
-  price: z.number().positive("Price must be positive"),
-  quantity: z.number().positive("Quantity must be positive"),
+  subcategory: z.string().optional(), // ✅ this is the fix
+  price: z.number().positive(),
+  quantity: z.number().positive(),
   unit: z.enum(["KG", "TON", "LITER", "PIECE"]),
   location: z.string().min(2),
-  images: z.array(z.string().url()).max(5, "Maximum 5 images allowed"),
+  images: z.array(z.string()).default([]),
 });
 
 // Order schemas
