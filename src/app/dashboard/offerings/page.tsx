@@ -34,4 +34,4 @@ export default async function OfferingsPage() {
       </table>
     </div>
   );
-}cd 
+}
