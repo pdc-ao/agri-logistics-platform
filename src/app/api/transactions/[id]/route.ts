@@ -26,10 +26,12 @@ function assert(condition: any, message: string) {
   if (!condition) throw new Error(message);
 }
 
+// ---------------- GET ----------------
 export async function GET(
   _req: Request,
-  { params }: { params: { id: string } }
+  context: { params: { id: string } }
 ) {
+  const { params } = context;
   try {
     const tx = await db.paymentTransaction.findUnique({
       where: { id: params.id },
@@ -42,10 +44,12 @@ export async function GET(
   }
 }
 
+// ---------------- PATCH ----------------
 export async function PATCH(
   request: Request,
-  { params }: { params: { id: string } }
+  context: { params: { id: string } }
 ) {
+  const { params } = context;
   try {
     const sessionUserId = await getSessionUserId();
     if (!sessionUserId) {
@@ -62,23 +66,19 @@ export async function PATCH(
       return NextResponse.json({ error: 'Transaction not found' }, { status: 404 });
     }
 
-    // Ownership / admin check for sensitive actions
+    // Ownership / admin check
     const isBuyer = txRecord.buyerId === sessionUserId;
     const isSeller = txRecord.sellerId === sessionUserId;
     const userRole = await getSessionUserRole();
     const isAdmin = userRole === 'ADMIN';
 
-    // Validate state machine
-    const current = txRecord.status;
-    let nextStatus = current;
+    let nextStatus = txRecord.status;
     const now = new Date();
 
-    // Some actions will mutate wallet; load wallet rows inside transaction
+    // Run state machine inside transaction
     const updatedTx = await db.$transaction(async (tx) => {
-      // Reload fresh inside transaction
       const fresh = await tx.paymentTransaction.findUnique({
         where: { id: params.id },
-        lock: { mode: 'ForUpdate' }, // Ensure serialized transition
       });
       if (!fresh) throw new Error('Transaction vanished');
       const cur = fresh.status;
@@ -95,7 +95,7 @@ export async function PATCH(
 
         case 'SELLER_CONFIRM':
           assert(isSeller, 'Only seller can confirm');
-            assert(cur === 'FUNDED', 'Must be FUNDED');
+          assert(cur === 'FUNDED', 'Must be FUNDED');
           nextStatus = 'SELLER_CONFIRMED';
           return tx.paymentTransaction.update({
             where: { id: params.id },
@@ -104,7 +104,7 @@ export async function PATCH(
 
         case 'BUYER_CONFIRM':
           assert(isBuyer, 'Only buyer can confirm');
-          assert(['FUNDED','SELLER_CONFIRMED'].includes(cur), 'Invalid state for buyer confirm');
+          assert(['FUNDED', 'SELLER_CONFIRMED'].includes(cur), 'Invalid state for buyer confirm');
           nextStatus = 'BUYER_CONFIRMED';
           return tx.paymentTransaction.update({
             where: { id: params.id },
@@ -113,19 +113,18 @@ export async function PATCH(
 
         case 'RELEASE':
           assert(isAdmin || isBuyer, 'Only buyer or admin can release');
-          // For stricter logic, require both confirmations:
-          // assert(fresh.sellerConfirmed && fresh.buyerConfirmed, 'Both must confirm before release');
-          assert(['BUYER_CONFIRMED','SELLER_CONFIRMED'].includes(cur) || (fresh.buyerConfirmed && fresh.sellerConfirmed),
-            'Must be confirmed before release');
+          assert(
+            ['BUYER_CONFIRMED', 'SELLER_CONFIRMED'].includes(cur) ||
+              (fresh.buyerConfirmed && fresh.sellerConfirmed),
+            'Must be confirmed before release'
+          );
           nextStatus = 'RELEASED';
 
           // Credit seller wallet
           await ensureWallet(tx, fresh.sellerId);
           await tx.walletBalance.update({
             where: { userId: fresh.sellerId },
-            data: {
-              balance: { increment: fresh.amount },
-            },
+            data: { balance: { increment: fresh.amount } },
           });
 
           return tx.paymentTransaction.update({
@@ -135,7 +134,7 @@ export async function PATCH(
 
         case 'DISPUTE':
           assert(isBuyer || isSeller, 'Participants only');
-          assert(['FUNDED','SELLER_CONFIRMED','BUYER_CONFIRMED'].includes(cur), 'Cannot dispute now');
+          assert(['FUNDED', 'SELLER_CONFIRMED', 'BUYER_CONFIRMED'].includes(cur), 'Cannot dispute now');
           nextStatus = 'DISPUTED';
           return tx.paymentTransaction.update({
             where: { id: params.id },
@@ -183,6 +182,7 @@ export async function PATCH(
   }
 }
 
+// ---------------- Helpers ----------------
 async function ensureWallet(tx: any, userId: string) {
   const existing = await tx.walletBalance.findUnique({ where: { userId } });
   if (!existing) {
