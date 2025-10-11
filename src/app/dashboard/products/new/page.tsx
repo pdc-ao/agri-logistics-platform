@@ -11,9 +11,7 @@ export default async function NewProductPage() {
   }
 
   // You could preload data here if needed, e.g. categories
-  const categories = await db.productCategory.findMany({
-    orderBy: { name: "asc" },
-  });
+  const categories = [];
 
   return (
     <div className="p-6 space-y-6">
