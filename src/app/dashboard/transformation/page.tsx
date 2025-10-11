@@ -95,7 +95,7 @@ export default async function TransformationFacilitiesPage() {
           <Card>
             <CardContent className="p-4 text-center">
               <div className="text-2xl font-bold text-blue-600">
-                {facilities.filter(f => f.facilityType === 'Processing').length}
+                {facilities.filter(f => f.serviceType === 'Processing').length}
               </div>
               <div className="text-sm text-gray-600">Processamento</div>
             </CardContent>
@@ -103,7 +103,7 @@ export default async function TransformationFacilitiesPage() {
           <Card>
             <CardContent className="p-4 text-center">
               <div className="text-2xl font-bold text-purple-600">
-                {facilities.filter(f => f.facilityType === 'Milling').length}
+                {facilities.filter(f => f.serviceType === 'Milling').length}
               </div>
               <div className="text-sm text-gray-600">Moagem</div>
             </CardContent>
@@ -111,7 +111,7 @@ export default async function TransformationFacilitiesPage() {
           <Card>
             <CardContent className="p-4 text-center">
               <div className="text-2xl font-bold text-orange-600">
-                {facilities.filter(f => f.facilityType === 'Packaging').length}
+                {facilities.filter(f => f.serviceType === 'Packaging').length}
               </div>
               <div className="text-sm text-gray-600">Embalagem</div>
             </CardContent>
@@ -150,14 +150,14 @@ export default async function TransformationFacilitiesPage() {
                 <div className="flex items-start justify-between">
                   <div className="flex items-center space-x-3">
                     <span className="text-3xl">
-                      {getFacilityTypeInfo(facility.facilityType || '').icon}
+                      {getFacilityTypeInfo(facility.serviceType || '').icon}
                     </span>
                     <div>
                       <CardTitle className="text-lg line-clamp-1">
-                        {facility.facilityName}
+                        {facility.name}
                       </CardTitle>
                       <p className="text-sm text-gray-600">
-                        {getFacilityTypeInfo(facility.facilityType || '').label}
+                        {getFacilityTypeInfo(facility.serviceType || '').label}
                       </p>
                     </div>
                   </div>
@@ -175,25 +175,35 @@ export default async function TransformationFacilitiesPage() {
               </CardHeader>
               
               <CardContent className="space-y-3">
-                {facility.description && (
-                  <p className="text-gray-600 text-sm line-clamp-2">
-                    {facility.description}
-                  </p>
-                )}
-                
                 <div className="space-y-2">
                   {facility.capacity && (
                     <div className="flex justify-between items-center text-sm">
                       <span className="text-gray-600">Capacidade:</span>
                       <span className="font-medium">
-                        {facility.capacity} {facility.capacityUnit}
+                        {facility.capacity} unidades
+                      </span>
+                    </div>
+                  )}
+                  
+                  {facility.processingRate > 0 && (
+                    <div className="flex justify-between items-center text-sm">
+                      <span className="text-gray-600">Taxa de Processamento:</span>
+                      <span className="font-medium">
+                        {facility.processingRate}/hora
                       </span>
                     </div>
                   )}
                   
                   <div className="flex justify-between items-center text-sm">
                     <span className="text-gray-600">Localização:</span>
-                    <span className="font-medium">{facility.city}</span>
+                    <span className="font-medium">{facility.location}</span>
+                  </div>
+                  
+                  <div className="flex justify-between items-center text-sm">
+                    <span className="text-gray-600">Status:</span>
+                    <span className={`font-medium ${facility.isActive ? 'text-green-600' : 'text-red-600'}`}>
+                      {facility.isActive ? 'Ativo' : 'Inativo'}
+                    </span>
                   </div>
                   
                   {!isTransformer && (
