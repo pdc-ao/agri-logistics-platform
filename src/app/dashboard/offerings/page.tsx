@@ -1,9 +1,9 @@
 import { db } from '@/lib/prisma';
 
 export default async function OfferingsPage() {
-  const offerings = await prisma.offering.findMany({
+  const offerings = await db.offering.findMany({
     orderBy: { createdAt: 'desc' },
-    include: { _count: { select: { schedules: true } } }
+    include: { _count: { select: { schedules: true } } },
   });
 
   return (
@@ -18,16 +18,23 @@ export default async function OfferingsPage() {
           </tr>
         </thead>
         <tbody>
-          {offerings.map(o => (
+          {offerings.map((o) => (
             <tr key={o.id} className="border-t">
               <td className="p-2">{o.title}</td>
               <td className="p-2">{o._count.schedules}</td>
-              <td className="p-2">{new Date(o.createdAt).toLocaleDateString()}</td>
+              <td className="p-2">
+                {new Date(o.createdAt).toLocaleDateString()}
+              </td>
             </tr>
           ))}
           {offerings.length === 0 && (
             <tr>
-              <td colSpan={3} className="p-4 text-center text-neutral-500">No offerings.</td>
+              <td
+                colSpan={3}
+                className="p-4 text-center text-neutral-500"
+              >
+                No offerings.
+              </td>
             </tr>
           )}
         </tbody>
