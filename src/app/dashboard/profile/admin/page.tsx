@@ -25,8 +25,17 @@ export default async function AdminProfilePage() {
   const totalProducts = await db.productListing.count();
   const pendingOrders = await db.order.count({ where: { orderStatus: 'Pending' } });
 
+  // Transform user object to match ProfileShell expectations
+  const profileUser = {
+    fullName: user.fullName ?? undefined,
+    username: user.username,
+    email: user.email,
+    verificationStatus: user.verificationStatus,
+    role: user.role,
+  };
+
   return (
-    <ProfileShell user={user}>
+    <ProfileShell user={profileUser}>
       <div>
         <h2 className="text-xl font-semibold mb-2">Admin Overview</h2>
         <p className="text-sm text-gray-600 mb-4">Platform metrics and management links.</p>

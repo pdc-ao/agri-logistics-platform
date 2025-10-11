@@ -27,11 +27,20 @@ export default async function ConsumerProfilePage() {
     where: { buyerId: user.id },
     orderBy: { orderDate: 'desc' },
     take: 5,
-    select: { id: true, totalAmount: true, orderStatus: true, orderDate: true }
+    select: { id: true, totalAmount: true, orderStatus: true, orderDate: true, currency: true }
   });
 
+  // Transform user object for ProfileShell
+  const profileUser = {
+    fullName: user.fullName ?? undefined,
+    username: user.username,
+    email: user.email,
+    verificationStatus: user.verificationStatus,
+    role: user.role,
+  };
+
   return (
-    <ProfileShell user={user}>
+    <ProfileShell user={profileUser}>
       <div>
         <h2 className="text-xl font-semibold mb-2">My Profile</h2>
         <p className="text-sm text-gray-600 mb-4">Manage your account, orders and saved producers.</p>

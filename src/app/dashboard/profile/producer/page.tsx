@@ -8,7 +8,6 @@ export default async function ProducerProfilePage() {
   if (!session?.user?.id) redirect('/auth/login');
 
   const user = await db.user.findUnique({ where: { id: session.user.id } });
-
   if (!user) {
     return <div className="p-8">User not found.</div>;
   }
@@ -27,8 +26,24 @@ export default async function ProducerProfilePage() {
   const productCount = await db.productListing.count({ where: { producerId: user.id } });
   const averageRating = user.averageRating ?? 0;
 
+  const recentListings = await db.productListing.findMany({
+    where: { producerId: user.id },
+    orderBy: { createdAt: 'desc' },
+    take: 5,
+    select: { id: true, title: true, pricePerUnit: true, createdAt: true, currency: true }
+  });
+
+  // Transform user object for ProfileShell
+  const profileUser = {
+    fullName: user.fullName ?? undefined,
+    username: user.username,
+    email: user.email,
+    verificationStatus: user.verificationStatus,
+    role: user.role,
+  };
+
   return (
-    <ProfileShell user={user}>
+    <ProfileShell user={profileUser}>
       <div>
         <h2 className="text-xl font-semibold mb-2">Producer Overview</h2>
         <p className="text-sm text-gray-600 mb-4">
@@ -56,14 +71,7 @@ export default async function ProducerProfilePage() {
         <section>
           <h3 className="font-semibold mb-2">Recent Listings</h3>
           <div className="space-y-2">
-            {(
-              await db.productListing.findMany({
-                where: { producerId: user.id },
-                orderBy: { createdAt: 'desc' },
-                take: 5,
-                select: { id: true, title: true, pricePerUnit: true, createdAt: true }
-              })
-            ).map((p) => (
+            {recentListings.map((p) => (
               <div key={p.id} className="p-3 border rounded">
                 <div className="font-medium">{p.title}</div>
                 <div className="text-sm text-gray-500">Price: {p.pricePerUnit} {p.currency ?? 'AOA'}</div>

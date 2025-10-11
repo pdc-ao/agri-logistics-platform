@@ -21,9 +21,25 @@ export default async function TransporterProfilePage() {
   }
 
   const servicesCount = await db.transportListing.count({ where: { transporterId: user.id } });
+  
+  const services = await db.transportListing.findMany({
+    where: { transporterId: user.id },
+    take: 5,
+    orderBy: { createdAt: 'desc' },
+    select: { id: true, serviceTitle: true, baseLocationCity: true, availabilityStatus: true },
+  });
+
+  // Transform user object for ProfileShell
+  const profileUser = {
+    fullName: user.fullName ?? undefined,
+    username: user.username,
+    email: user.email,
+    verificationStatus: user.verificationStatus,
+    role: user.role,
+  };
 
   return (
-    <ProfileShell user={user}>
+    <ProfileShell user={profileUser}>
       <div>
         <h2 className="text-xl font-semibold mb-2">Transporter Overview</h2>
         <p className="text-sm text-gray-600 mb-4">Manage your transport services and availability.</p>
@@ -46,12 +62,7 @@ export default async function TransporterProfilePage() {
         <section>
           <h3 className="font-semibold mb-2">Your Services</h3>
           <div className="space-y-2">
-            {(await db.transportListing.findMany({
-              where: { transporterId: user.id },
-              take: 5,
-              orderBy: { createdAt: 'desc' },
-              select: { id: true, serviceTitle: true, baseLocationCity: true, availabilityStatus: true },
-            })).map(s => (
+            {services.map(s => (
               <div key={s.id} className="p-3 border rounded">
                 <div className="font-medium">{s.serviceTitle}</div>
                 <div className="text-sm text-gray-500">{s.baseLocationCity} — {s.availabilityStatus}</div>

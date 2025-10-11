@@ -8,7 +8,6 @@ export default async function StorageOwnerProfilePage() {
   if (!session?.user?.id) redirect('/auth/login');
 
   const user = await db.user.findUnique({ where: { id: session.user.id } });
-
   if (!user) return <div className="p-8">User not found.</div>;
 
   if (user.role !== 'STORAGE_OWNER') {
@@ -22,9 +21,25 @@ export default async function StorageOwnerProfilePage() {
   }
 
   const storageCount = await db.storageListing.count({ where: { ownerId: user.id } });
+  
+  const facilities = await db.storageListing.findMany({
+    where: { ownerId: user.id },
+    take: 5,
+    orderBy: { createdAt: 'desc' },
+    select: { id: true, facilityName: true, city: true, availabilityStatus: true },
+  });
+
+  // Transform user object for ProfileShell
+  const profileUser = {
+    fullName: user.fullName ?? undefined,
+    username: user.username,
+    email: user.email,
+    verificationStatus: user.verificationStatus,
+    role: user.role,
+  };
 
   return (
-    <ProfileShell user={user}>
+    <ProfileShell user={profileUser}>
       <div>
         <h2 className="text-xl font-semibold mb-2">Storage Owner Overview</h2>
         <p className="text-sm text-gray-600 mb-4">Manage your facilities, availability and pricing.</p>
@@ -47,12 +62,7 @@ export default async function StorageOwnerProfilePage() {
         <section>
           <h3 className="font-semibold mb-2">Your Facilities</h3>
           <div className="space-y-2">
-            {(await db.storageListing.findMany({
-              where: { ownerId: user.id },
-              take: 5,
-              orderBy: { createdAt: 'desc' },
-              select: { id: true, facilityName: true, city: true, availabilityStatus: true },
-            })).map(s => (
+            {facilities.map(s => (
               <div key={s.id} className="p-3 border rounded">
                 <div className="font-medium">{s.facilityName}</div>
                 <div className="text-sm text-gray-500">{s.city} — {s.availabilityStatus}</div>
