@@ -28,7 +28,7 @@ function assert(condition: any, message: string) {
 
 export async function GET(
   _req: Request,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: { id: string } }
 ) {
   try {
     const tx = await db.paymentTransaction.findUnique({
@@ -44,7 +44,7 @@ export async function GET(
 
 export async function PATCH(
   request: Request,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: { id: string } }
 ) {
   try {
     const sessionUserId = await getSessionUserId();
