@@ -5,7 +5,7 @@ import { requireAdmin } from '@/lib/auth';
 
 export async function PUT(
   request: Request,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: { id: string } }
 ) {
   try {
     const session = await requireAdmin();
@@ -26,28 +26,28 @@ export async function PUT(
       );
     }
 
-    const document = await db.businessDocument.update({
+    const document = await db.document.update({
       where: { id: documentId },
       data: {
         status,
         notes,
         reviewedAt: new Date(),
-        reviewerId: session.user.id
+        reviewedBy: session.user.id, // matches your schema field
       },
       include: {
-        user: true
-      }
+        user: true,
+      },
     });
 
     // If document is approved, check if user should be verified
     if (status === 'APPROVED') {
       const userId = document.userId;
-      
-      const approvedDocs = await db.businessDocument.count({
+
+      const approvedDocs = await db.document.count({
         where: {
           userId,
-          status: 'APPROVED'
-        }
+          status: 'APPROVED',
+        },
       });
 
       // Require at least 2 approved documents for verification
@@ -57,8 +57,8 @@ export async function PUT(
           data: {
             isVerified: true,
             verificationStatus: 'VERIFIED',
-            verificationDetails: 'Verificado após aprovação de documentos'
-          }
+            verificationDetails: 'Verificado após aprovação de documentos',
+          },
         });
       }
     }
