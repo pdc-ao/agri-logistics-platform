@@ -1,6 +1,6 @@
 import { db } from '@/lib/prisma';
 export default async function SuppliersPage() {
-  const suppliers = await prisma.supplier.findMany({
+  const suppliers = await db.supplier.findMany({
     orderBy: { createdAt: 'desc' },
     include: { _count: { select: { components: true } } }
   });

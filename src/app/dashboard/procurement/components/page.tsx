@@ -1,7 +1,7 @@
 import { db } from '@/lib/prisma';
 
 export default async function ComponentsPage() {
-  const components = await prisma.component.findMany({
+  const components = await db.component.findMany({
     orderBy: { createdAt: 'desc' },
     include: { supplier: true }
   });
