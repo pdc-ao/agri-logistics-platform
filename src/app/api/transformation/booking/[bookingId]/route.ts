@@ -19,7 +19,7 @@ export const GET = withAuth(
           facility: {
             include: {
               owner: {
-                select: { id: true, email: true, phone: true },
+                select: { id: true, email: true, /*phone: true*/},
               },
             },
           },
