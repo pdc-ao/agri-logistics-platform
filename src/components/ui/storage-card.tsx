@@ -137,7 +137,7 @@ export const StorageCard: React.FC<StorageCardProps> = ({
           </Button>
           {(storage.availabilityStatus === 'Available' || storage.availabilityStatus === 'PartiallyAvailable') && onContact && (
             <Button
-              variant="primary"
+              variant="default"
               onClick={() => onContact(storage.id)}
               className="flex-1"
             >

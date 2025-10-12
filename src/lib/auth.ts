@@ -35,7 +35,7 @@ export const authOptions: NextAuthOptions = {
   ],
   pages: {
     signIn: "/auth/login",
-    signUp: "/auth/register",
+    newUser: "/auth/register",
   },
   callbacks: {
     async jwt({ token, user }) {
@@ -44,8 +44,8 @@ export const authOptions: NextAuthOptions = {
     },
     async session({ session, token }) {
       if (token) {
-        session.user.id = token.sub;
-        session.user.role = token.role;
+        session.user.id = token.sub ?? "";
+        session.user.role = token.role as string;
       }
       return session;
     },

@@ -1,6 +1,5 @@
 import { z } from "zod";
 import { db } from "@/lib/prisma";
-import { someHelper } from "@/lib/utils";
 
 const clients = new Set<WebSocket>();
 

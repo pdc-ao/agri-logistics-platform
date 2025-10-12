@@ -84,7 +84,7 @@ export const StorageForm: React.FC<StorageFormProps> = ({
   const removeImage = (index: number) => {
     setFormData((prev) => ({
       ...prev,
-      imagesUrls: prev.imagesUrls.filter((_, i) => i !== index),
+        imagesUrls: prev.imagesUrls.filter((_: string, i: number) => i !== index),
     }));
   };
 
@@ -101,7 +101,7 @@ export const StorageForm: React.FC<StorageFormProps> = ({
   const removeAmenity = (index: number) => {
     setFormData((prev) => ({
       ...prev,
-      amenities: prev.amenities.filter((_, i) => i !== index),
+      amenities: prev.amenities.filter((_: string, i: number) => i !== index),
     }));
   };
 
@@ -170,7 +170,6 @@ export const StorageForm: React.FC<StorageFormProps> = ({
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <Input
             id="facilityName"
-            name="facilityName"
             label="Nome da Instalação"
             type="text"
             placeholder="Ex: Armazém Central Huambo"
@@ -181,7 +180,6 @@ export const StorageForm: React.FC<StorageFormProps> = ({
 
           <Select
             id="storageType"
-            name="storageType"
             label="Tipo de Armazenamento"
             options={storageTypeOptions}
             value={formData.storageType}
@@ -193,7 +191,6 @@ export const StorageForm: React.FC<StorageFormProps> = ({
             <div className="flex-1">
               <Input
                 id="totalCapacity"
-                name="totalCapacity"
                 label="Capacidade Total"
                 type="number"
                 placeholder="Ex: 1000"
@@ -204,7 +201,6 @@ export const StorageForm: React.FC<StorageFormProps> = ({
             <div className="flex-1">
               <Select
                 id="capacityUnit"
-                name="capacityUnit"
                 label="Unidade de Capacidade"
                 options={capacityUnitOptions}
                 value={formData.capacityUnit}
@@ -215,7 +211,6 @@ export const StorageForm: React.FC<StorageFormProps> = ({
 
           <Input
             id="availableCapacity"
-            name="availableCapacity"
             label="Capacidade Disponível"
             type="number"
             placeholder="Ex: 500"
@@ -225,7 +220,6 @@ export const StorageForm: React.FC<StorageFormProps> = ({
 
           <Input
             id="pricingStructure"
-            name="pricingStructure"
             label="Estrutura de Preços"
             type="text"
             placeholder="Ex: 500 AOA por m² por mês"
@@ -236,7 +230,6 @@ export const StorageForm: React.FC<StorageFormProps> = ({
 
           <Input
             id="addressLine1"
-            name="addressLine1"
             label="Endereço"
             type="text"
             placeholder="Ex: Rua Principal, 123"
@@ -247,7 +240,6 @@ export const StorageForm: React.FC<StorageFormProps> = ({
 
           <Input
             id="city"
-            name="city"
             label="Cidade"
             type="text"
             placeholder="Ex: Huambo"
@@ -258,7 +250,6 @@ export const StorageForm: React.FC<StorageFormProps> = ({
 
           <Input
             id="postalCode"
-            name="postalCode"
             label="Código Postal"
             type="text"
             placeholder="Ex: 12345"
@@ -269,7 +260,6 @@ export const StorageForm: React.FC<StorageFormProps> = ({
 
           <Input
             id="country"
-            name="country"
             label="País"
             type="text"
             value={formData.country}
@@ -281,10 +271,8 @@ export const StorageForm: React.FC<StorageFormProps> = ({
             <div className="flex-1">
               <Input
                 id="latitude"
-                name="latitude"
                 label="Latitude"
                 type="number"
-                step="0.000001"
                 placeholder="Ex: -12.345678"
                 value={formData.latitude}
                 onChange={handleNumberChange}
@@ -294,10 +282,8 @@ export const StorageForm: React.FC<StorageFormProps> = ({
             <div className="flex-1">
               <Input
                 id="longitude"
-                name="longitude"
                 label="Longitude"
                 type="number"
-                step="0.000001"
                 placeholder="Ex: 15.678901"
                 value={formData.longitude}
                 onChange={handleNumberChange}
@@ -308,7 +294,6 @@ export const StorageForm: React.FC<StorageFormProps> = ({
 
           <Select
             id="availabilityStatus"
-            name="availabilityStatus"
             label="Status de Disponibilidade"
             options={statusOptions}
             value={formData.availabilityStatus}
@@ -324,7 +309,6 @@ export const StorageForm: React.FC<StorageFormProps> = ({
           <div className="flex space-x-2">
             <Input
               id="amenity"
-              name="amenity"
               placeholder="Ex: Segurança 24h"
               type="text"
               value={amenity}
@@ -341,7 +325,7 @@ export const StorageForm: React.FC<StorageFormProps> = ({
           </div>
           {formData.amenities.length > 0 && (
             <div className="mt-2 flex flex-wrap gap-2">
-              {formData.amenities.map((item, index) => (
+              {formData.amenities.map((item: string, index: number) => (
                 <div key={index} className="bg-green-100 text-green-800 px-3 py-1 rounded-full flex items-center">
                   <span>{item}</span>
                   <button
@@ -366,7 +350,6 @@ export const StorageForm: React.FC<StorageFormProps> = ({
           <div className="flex space-x-2">
             <Input
               id="imageUrl"
-              name="imageUrl"
               placeholder="URL da imagem"
               type="text"
               value={imageUrl}
@@ -383,7 +366,7 @@ export const StorageForm: React.FC<StorageFormProps> = ({
           </div>
           {formData.imagesUrls.length > 0 && (
             <div className="mt-4 grid grid-cols-2 md:grid-cols-3 gap-4">
-              {formData.imagesUrls.map((url, index) => (
+              {formData.imagesUrls.map((url: string, index: number) => (
                 <div key={index} className="relative">
                   <img
                     src={url}
@@ -441,8 +424,7 @@ export const StorageForm: React.FC<StorageFormProps> = ({
 
         <Button
           type="submit"
-          variant="primary"
-          fullWidth
+          variant="default"
           disabled={isLoading}
         >
           {isLoading ? 'Salvando...' : isEditing ? 'Atualizar Instalação' : 'Adicionar Instalação'}

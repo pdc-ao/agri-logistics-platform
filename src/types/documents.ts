@@ -153,12 +153,12 @@ export function getRequiredDocuments(
 /**
  * Check if a document type is for individuals only
  */
-export function isIndividualDocument(docType: string): boolean {
+export function isIndividualDocument(docType: string): docType is typeof DocumentType.ID_CARD | typeof DocumentType.PASSPORT | typeof DocumentType.DRIVERS_LICENSE {
   return [
     DocumentType.ID_CARD,
     DocumentType.PASSPORT,
     DocumentType.DRIVERS_LICENSE,
-  ].includes(docType);
+  ].includes(docType as any);
 }
 
 /**
@@ -171,7 +171,7 @@ export function isCompanyDocument(docType: string): boolean {
     DocumentType.MEMORANDUM_OF_ASSOCIATION,
     DocumentType.SHAREHOLDER_AGREEMENT,
     DocumentType.COMPANY_CONSTITUTION,
-  ].includes(docType);
+  ].includes(docType as any);
 }
 
 /**

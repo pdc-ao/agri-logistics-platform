@@ -89,7 +89,7 @@ export default function WalletDashboard({ userId }: WalletDashboardProps) {
           <div>
             <h2 className="text-lg font-medium">Wallet Balance</h2>
             <p className="text-3xl font-bold mt-2">
-              {wallet?.balance ? `AOA ${Number(wallet.balance).toLocaleString()}` : 'AOA 0'}
+              {wallet?.available ? `AOA ${Number(wallet.available).toLocaleString()}` : 'AOA 0'}
             </p>
             <p className="text-green-100 text-sm mt-1">
               Last updated: {wallet?.updatedAt ? new Date(wallet.updatedAt).toLocaleDateString() : 'Never'}
@@ -122,7 +122,7 @@ export default function WalletDashboard({ userId }: WalletDashboardProps) {
               <p className="text-sm font-medium text-gray-600">Total Earned</p>
               <p className="text-2xl font-semibold text-gray-900">
                 AOA {transactions
-                  .filter(t => t.sellerId === userId && t.status === 'RELEASED')
+                  .filter(t => t.userId === userId && t.status === 'COMPLETED')
                   .reduce((sum, t) => sum + Number(t.amount), 0)
                   .toLocaleString()}
               </p>
@@ -141,7 +141,7 @@ export default function WalletDashboard({ userId }: WalletDashboardProps) {
               <p className="text-sm font-medium text-gray-600">In Escrow</p>
               <p className="text-2xl font-semibold text-gray-900">
                 AOA {transactions
-                  .filter(t => (t.buyerId === userId || t.sellerId === userId) && ['FUNDED', 'SELLER_CONFIRMED', 'BUYER_CONFIRMED'].includes(t.status))
+                  .filter(t => (t.userId === userId || t.userId === userId) && ['FUNDED', 'SELLER_CONFIRMED', 'BUYER_CONFIRMED'].includes(t.status))
                   .reduce((sum, t) => sum + Number(t.amount), 0)
                   .toLocaleString()}
               </p>
@@ -160,7 +160,7 @@ export default function WalletDashboard({ userId }: WalletDashboardProps) {
               <p className="text-sm font-medium text-gray-600">Pending</p>
               <p className="text-2xl font-semibold text-gray-900">
                 AOA {transactions
-                  .filter(t => (t.buyerId === userId || t.sellerId === userId) && t.status === 'PENDING')
+                  .filter(t => (t.userId === userId || t.userId === userId) && t.status === 'PENDING')
                   .reduce((sum, t) => sum + Number(t.amount), 0)
                   .toLocaleString()}
               </p>
@@ -185,7 +185,7 @@ export default function WalletDashboard({ userId }: WalletDashboardProps) {
                     )}
                     <div className="relative flex space-x-3">
                       <div className={`h-8 w-8 rounded-full flex items-center justify-center ring-8 ring-white ${
-                        transaction.buyerId === userId ? 'bg-red-500' : 'bg-green-500'
+                        transaction.userId === userId ? 'bg-red-500' : 'bg-green-500'
                       }`}>
                         <svg
                           className="h-4 w-4 text-white"
@@ -193,7 +193,7 @@ export default function WalletDashboard({ userId }: WalletDashboardProps) {
                           viewBox="0 0 24 24"
                           stroke="currentColor"
                         >
-                          {transaction.buyerId === userId ? (
+                          {transaction.userId === userId ? (
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 14l-7 7m0 0l-7-7m7 7V3" />
                           ) : (
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 10l7-7m0 0l7 7m-7-7v18" />
@@ -203,7 +203,7 @@ export default function WalletDashboard({ userId }: WalletDashboardProps) {
                       <div className="min-w-0 flex-1 pt-1.5 flex justify-between space-x-4">
                         <div>
                           <p className="text-sm text-gray-500">
-                            {transaction.buyerId === userId ? 'Payment sent' : 'Payment received'}
+                            {transaction.userId === userId ? 'Payment sent' : 'Payment received'}
                             <span className="font-medium text-gray-900">
                               {' '}AOA {Number(transaction.amount).toLocaleString()}
                             </span>

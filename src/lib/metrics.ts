@@ -1,3 +1,5 @@
+import { db } from "./prisma";
+
 // src/lib/metrics.ts
 export async function trackApiMetric(
   endpoint: string,
@@ -5,23 +7,17 @@ export async function trackApiMetric(
   status: number,
   userId?: string
 ) {
-  await prisma.apiMetric.create({
+  try {
+  await db.auditLog.create({
     data: {
-      endpoint,
-      duration,
-      status,
-      userId,
-      timestamp: new Date(),
+     userId,
+     action: "API_CALL",
+     entityType: "ENDPOINT",
+     entityId: endpoint,
+     details: { duration, status }, // store extra info in JSON
     },
   });
-}
-
-// Usage in API route
-const startTime = Date.now();
-try {
-  // Your API logic
-  return response;
-} finally {
-  const duration = Date.now() - startTime;
-  await trackApiMetric("/api/products", duration, 200, user.id);
+} catch (err) {
+    console.error("Failed to record API metric:", err);
+  }
 }

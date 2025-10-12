@@ -103,7 +103,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({
           </Button>
           {product.quantityAvailable > 0 && onAddToCart && (
             <Button
-              variant="primary"
+              variant="default"
               onClick={() => onAddToCart(product.id)}
               className="flex-1"
             >

@@ -1,24 +1,86 @@
-export type UserRole =
-  | 'PRODUCER'
-  | 'CONSUMER'
-  | 'STORAGE_OWNER'
-  | 'TRANSPORTER'
-  | 'TRANSFORMER'
-  | 'ADMIN';
+// src/types/index.ts
+import { z } from "zod";
 
-export type VerificationStatus = 'PENDING' | 'VERIFIED' | 'REJECTED';
+// -----------------------------------------------------
+// Enums (derived from your Prisma schema)
+// -----------------------------------------------------
+
+export const UserRole = {
+  PRODUCER: "PRODUCER",
+  CONSUMER: "CONSUMER",
+  STORAGE_OWNER: "STORAGE_OWNER",
+  TRANSPORTER: "TRANSPORTER",
+  TRANSFORMER: "TRANSFORMER",
+  ADMIN: "ADMIN",
+} as const;
+
+export type UserRole = typeof UserRole[keyof typeof UserRole];
+
+export type VerificationStatus = "PENDING" | "VERIFIED" | "REJECTED";
+
+// -----------------------------------------------------
+// User types
+// -----------------------------------------------------
 
 export interface BasicUser {
   id: string;
   username: string;
   email: string;
-  fullName?: string;
+  fullName: string;
   role: UserRole;
   isVerified?: boolean;
   verificationStatus?: VerificationStatus;
   averageRating?: number;
-  createdAt?: string;
+  createdAt?: Date;
 }
+
+export interface BasicUser {
+  id: string;
+  email: string;
+  fullName: string | null; // allow both undefined and null
+}
+
+export interface AdminUser extends BasicUser {
+  fullName: string | null;
+  createdAt: Date;
+}
+
+// -----------------------------------------------------
+// Registration form schema + type
+// -----------------------------------------------------
+
+export const registerSchema = z.object({
+  username: z.string().min(3, "Username must be at least 3 characters"),
+  email: z.string().email("Invalid email"),
+  password: z.string().min(6, "Password must be at least 6 characters"),
+  confirmPassword: z.string().min(6, "Password must be at least 6 characters"),
+  fullName: z.string(),
+  phoneNumber: z.string().optional(),
+  role: z.nativeEnum(UserRole),
+  addressLine1: z.string().optional(),
+  city: z.string().optional(),
+  country: z.string().optional(),
+
+  // Producer-specific fields
+  farmName: z.string().optional(),
+  farmDescription: z.string().optional(),
+  certifications: z.string().optional(),
+
+  // Storage owner-specific fields
+  facilityName: z.string().optional(),
+  businessRegistrationId: z.string().optional(),
+
+  // Transporter-specific fields
+  companyName: z.string().optional(),
+  driverLicenseId: z.string().optional(),
+  vehicleRegistrationDetails: z.string().optional(),
+});
+
+export type RegisterFormData = z.infer<typeof registerSchema>;
+
+// -----------------------------------------------------
+// Product types
+// -----------------------------------------------------
 
 export interface Product {
   id: string;
@@ -50,6 +112,10 @@ export interface PaginatedProductsResponse {
   };
 }
 
+// -----------------------------------------------------
+// API error + Document
+// -----------------------------------------------------
+
 export interface ApiError {
   error: string;
 }
@@ -70,3 +136,36 @@ export interface Document {
   createdAt: Date;
   updatedAt?: Date;
 }
+
+export interface BusinessDocument {
+  id: string;
+  userId: string;
+  docType: string;   // ✅ add this
+  type: string;          // e.g. "BUSINESS_REGISTRATION", "LICENSE", etc.
+  fileName: string;
+  fileUrl: string;
+  status: "PENDING" | "VERIFIED" | "REJECTED";
+  rejectionReason?: string;
+  reviewedBy?: string;
+  reviewedAt?: Date;
+  createdAt: Date;
+  updatedAt?: Date;
+  submittedAt?: Date;   // ✅ add this
+}
+
+export interface WalletBalance {
+  userId: string;
+  available: number;   // funds available for use
+  pending: number;     // funds pending clearance
+  currency: string;    // e.g. "AOA", "USD"
+  updatedAt: Date;
+}
+
+export interface PaymentTransaction {
+  id: string;
+  userId: string;
+  amount: number;
+  currency: string;
+  type: "CREDIT" | "DEBIT";
+  status: "PENDING" | "COMPLETED" | "FAILED";
+  createdAt: Date;

@@ -79,7 +79,7 @@ export const TransportForm: React.FC<TransportFormProps> = ({
   const removeImage = (index: number) => {
     setFormData((prev) => ({
       ...prev,
-      imagesUrls: prev.imagesUrls.filter((_, i) => i !== index),
+      imagesUrls: prev.imagesUrls.filter((_: string, i: number) => i !== index),
     }));
   };
 
@@ -154,7 +154,6 @@ export const TransportForm: React.FC<TransportFormProps> = ({
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <Input
             id="serviceTitle"
-            name="serviceTitle"
             label="Título do Serviço"
             type="text"
             placeholder="Ex: Transporte de Produtos Agrícolas"
@@ -165,7 +164,6 @@ export const TransportForm: React.FC<TransportFormProps> = ({
 
           <Select
             id="vehicleType"
-            name="vehicleType"
             label="Tipo de Veículo"
             options={vehicleTypeOptions}
             value={formData.vehicleType}
@@ -177,7 +175,6 @@ export const TransportForm: React.FC<TransportFormProps> = ({
             <div className="flex-1">
               <Input
                 id="carryingCapacityWeight"
-                name="carryingCapacityWeight"
                 label="Capacidade de Carga (Peso)"
                 type="number"
                 placeholder="Ex: 5000"
@@ -188,7 +185,6 @@ export const TransportForm: React.FC<TransportFormProps> = ({
             <div className="flex-1">
               <Select
                 id="capacityWeightUnit"
-                name="capacityWeightUnit"
                 label="Unidade de Peso"
                 options={weightUnitOptions}
                 value={formData.capacityWeightUnit}
@@ -201,7 +197,6 @@ export const TransportForm: React.FC<TransportFormProps> = ({
             <div className="flex-1">
               <Input
                 id="carryingCapacityVolume"
-                name="carryingCapacityVolume"
                 label="Capacidade de Carga (Volume)"
                 type="number"
                 placeholder="Ex: 20"
@@ -212,7 +207,6 @@ export const TransportForm: React.FC<TransportFormProps> = ({
             <div className="flex-1">
               <Select
                 id="capacityVolumeUnit"
-                name="capacityVolumeUnit"
                 label="Unidade de Volume"
                 options={volumeUnitOptions}
                 value={formData.capacityVolumeUnit}
@@ -223,7 +217,6 @@ export const TransportForm: React.FC<TransportFormProps> = ({
 
           <Input
             id="pricingModel"
-            name="pricingModel"
             label="Modelo de Preços"
             type="text"
             placeholder="Ex: 5000 AOA por km ou 20000 AOA por tonelada"
@@ -234,7 +227,6 @@ export const TransportForm: React.FC<TransportFormProps> = ({
 
           <Select
             id="primaryDestinationType"
-            name="primaryDestinationType"
             label="Tipo de Destino Principal"
             options={destinationTypeOptions}
             value={formData.primaryDestinationType}
@@ -243,7 +235,6 @@ export const TransportForm: React.FC<TransportFormProps> = ({
 
           <Input
             id="baseLocationCity"
-            name="baseLocationCity"
             label="Cidade Base"
             type="text"
             placeholder="Ex: Luanda"
@@ -254,7 +245,6 @@ export const TransportForm: React.FC<TransportFormProps> = ({
 
           <Input
             id="baseLocationCountry"
-            name="baseLocationCountry"
             label="País Base"
             type="text"
             value={formData.baseLocationCountry}
@@ -264,7 +254,6 @@ export const TransportForm: React.FC<TransportFormProps> = ({
 
           <Input
             id="operationalRoutes"
-            name="operationalRoutes"
             label="Rotas Operacionais"
             type="text"
             placeholder="Ex: Luanda-Benguela, Luanda-Huambo"
@@ -274,7 +263,6 @@ export const TransportForm: React.FC<TransportFormProps> = ({
 
           <Select
             id="availabilityStatus"
-            name="availabilityStatus"
             label="Status de Disponibilidade"
             options={statusOptions}
             value={formData.availabilityStatus}
@@ -284,7 +272,6 @@ export const TransportForm: React.FC<TransportFormProps> = ({
 
           <Input
             id="insuranceDetails"
-            name="insuranceDetails"
             label="Detalhes do Seguro"
             type="text"
             placeholder="Ex: Seguro de carga completo até 5.000.000 AOA"
@@ -300,7 +287,6 @@ export const TransportForm: React.FC<TransportFormProps> = ({
           <div className="flex space-x-2">
             <Input
               id="imageUrl"
-              name="imageUrl"
               placeholder="URL da imagem"
               type="text"
               value={imageUrl}
@@ -317,7 +303,7 @@ export const TransportForm: React.FC<TransportFormProps> = ({
           </div>
           {formData.imagesUrls.length > 0 && (
             <div className="mt-4 grid grid-cols-2 md:grid-cols-3 gap-4">
-              {formData.imagesUrls.map((url, index) => (
+              {formData.imagesUrls.map((url: string, index: number) => (
                 <div key={index} className="relative">
                   <img
                     src={url}
@@ -359,8 +345,7 @@ export const TransportForm: React.FC<TransportFormProps> = ({
 
         <Button
           type="submit"
-          variant="primary"
-          fullWidth
+          variant="default"
           disabled={isLoading}
         >
           {isLoading ? 'Salvando...' : isEditing ? 'Atualizar Serviço' : 'Adicionar Serviço'}

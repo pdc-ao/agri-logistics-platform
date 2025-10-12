@@ -1,7 +1,36 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { User, BusinessDocument, UserRating } from '@/types';
+
+// Import BasicUser from types and extend it
+interface User {
+  id: string;
+  username: string;
+  email: string;
+  fullName: string | null;
+  role: string;
+  isVerified: boolean;
+  verificationStatus: string;
+  createdAt: Date | string;
+}
+
+interface BusinessDocument {
+  id: string;
+  docType: string;
+  fileUrl: string;
+  submittedAt: Date | string;
+  user: {
+    fullName: string | null;
+    username: string;
+  };
+}
+
+interface UserRating {
+  id: string;
+  rating: number;
+  comment: string | null;
+  createdAt: Date | string;
+}
 
 export default function AdminDashboard() {
   const [users, setUsers] = useState<User[]>([]);
@@ -144,66 +173,70 @@ export default function AdminDashboard() {
           <h3 className="text-lg leading-6 font-medium text-gray-900 mb-4">
             Pending Document Verifications
           </h3>
-          <div className="overflow-hidden shadow ring-1 ring-black ring-opacity-5 md:rounded-lg">
-            <table className="min-w-full divide-y divide-gray-300">
-              <thead className="bg-gray-50">
-                <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wide">
-                    User
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wide">
-                    Document Type
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wide">
-                    Submitted
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wide">
-                    Actions
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
-                {pendingVerifications.map((doc) => (
-                  <tr key={doc.id}>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                      {doc.user.fullName || doc.user.username}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {doc.docType}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {new Date(doc.submittedAt).toLocaleDateString()}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                      <div className="flex space-x-2">
-                        <button
-                          onClick={() => window.open(doc.fileUrl, '_blank')}
-                          className="text-blue-600 hover:text-blue-900"
-                        >
-                          View
-                        </button>
-                        <button
-                          onClick={() => handleVerificationAction(doc.id, 'APPROVED')}
-                          className="text-green-600 hover:text-green-900"
-                        >
-                          Approve
-                        </button>
-                        <button
-                          onClick={() => {
-                            const notes = prompt('Rejection reason:');
-                            if (notes) handleVerificationAction(doc.id, 'REJECTED', notes);
-                          }}
-                          className="text-red-600 hover:text-red-900"
-                        >
-                          Reject
-                        </button>
-                      </div>
-                    </td>
+          {pendingVerifications.length === 0 ? (
+            <p className="text-gray-500 text-center py-8">No pending verifications</p>
+          ) : (
+            <div className="overflow-hidden shadow ring-1 ring-black ring-opacity-5 md:rounded-lg">
+              <table className="min-w-full divide-y divide-gray-300">
+                <thead className="bg-gray-50">
+                  <tr>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wide">
+                      User
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wide">
+                      Document Type
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wide">
+                      Submitted
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wide">
+                      Actions
+                    </th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                </thead>
+                <tbody className="bg-white divide-y divide-gray-200">
+                  {pendingVerifications.map((doc) => (
+                    <tr key={doc.id}>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                        {doc.user.fullName || doc.user.username}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        {doc.docType}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        {new Date(doc.submittedAt).toLocaleDateString()}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                        <div className="flex space-x-2">
+                          <button
+                            onClick={() => window.open(doc.fileUrl, '_blank')}
+                            className="text-blue-600 hover:text-blue-900"
+                          >
+                            View
+                          </button>
+                          <button
+                            onClick={() => handleVerificationAction(doc.id, 'APPROVED')}
+                            className="text-green-600 hover:text-green-900"
+                          >
+                            Approve
+                          </button>
+                          <button
+                            onClick={() => {
+                              const notes = prompt('Rejection reason:');
+                              if (notes) handleVerificationAction(doc.id, 'REJECTED', notes);
+                            }}
+                            className="text-red-600 hover:text-red-900"
+                          >
+                            Reject
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
         </div>
       </div>
 

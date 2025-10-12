@@ -139,7 +139,7 @@ export const TransportCard: React.FC<TransportCardProps> = ({
           </Button>
           {transport.availabilityStatus === 'Available' && onContact && (
             <Button
-              variant="primary"
+              variant="default"
               onClick={() => onContact(transport.id)}
               className="flex-1"
             >

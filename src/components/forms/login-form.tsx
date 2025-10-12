@@ -95,12 +95,13 @@ export const LoginForm: React.FC<LoginFormProps> = ({
 
         <Button
           type="submit"
-          variant="primary"
-          fullWidth
+          variant="default"
+          className="bg-green-600 hover:bg-green-700 text-white"
           disabled={isLoading}
         >
           {isLoading ? 'Entrando...' : 'Entrar'}
         </Button>
+
 
         <div className="text-center">
           <p className="text-sm text-gray-600">

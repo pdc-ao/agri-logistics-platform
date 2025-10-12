@@ -125,7 +125,7 @@ export default function Header({ userRole, userName }: HeaderProps) {
                   </Button>
                 </Link>
                 <Link href="/auth/register">
-                  <Button variant="primary">
+                  <Button variant="default">
                     Cadastrar
                   </Button>
                 </Link>

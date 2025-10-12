@@ -109,7 +109,6 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({
         {/* Entity Type Selector */}
         <Select
           id="entityType"
-          name="entityType"
           label="Tipo de Entidade"
           options={[
             { value: "INDIVIDUAL", label: "Pessoa Física" },
@@ -123,7 +122,6 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <Input
             id="username"
-            name="username"
             label="Nome de usuário"
             value={formData.username}
             onChange={handleChange}
@@ -132,7 +130,6 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({
           />
           <Input
             id="email"
-            name="email"
             label="Email"
             type="email"
             value={formData.email}
@@ -144,7 +141,6 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({
           {formData.entityType === "INDIVIDUAL" ? (
             <Input
               id="fullName"
-              name="fullName"
               label="Nome completo"
               value={formData.fullName}
               onChange={handleChange}
@@ -155,7 +151,6 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({
             <>
               <Input
                 id="companyName"
-                name="companyName"
                 label="Nome da Empresa"
                 value={formData.companyName}
                 onChange={handleChange}
@@ -164,7 +159,6 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({
               />
               <Input
                 id="registrationNumber"
-                name="registrationNumber"
                 label="Número de Registro"
                 value={formData.registrationNumber}
                 onChange={handleChange}
@@ -173,7 +167,6 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({
               />
               <Input
                 id="taxId"
-                name="taxId"
                 label="NIF / Tax ID"
                 value={formData.taxId}
                 onChange={handleChange}
@@ -185,7 +178,6 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({
 
           <Input
             id="phoneNumber"
-            name="phoneNumber"
             label="Número de telefone"
             value={formData.phoneNumber}
             onChange={handleChange}
@@ -193,7 +185,6 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({
           />
           <Input
             id="password"
-            name="password"
             label="Senha"
             type="password"
             value={formData.password}
@@ -204,7 +195,6 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({
           />
           <Input
             id="confirmPassword"
-            name="confirmPassword"
             label="Confirmar senha"
             type="password"
             value={formData.confirmPassword}
@@ -216,7 +206,6 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({
 
         <Select
           id="role"
-          name="role"
           label="Tipo de usuário"
           options={roleOptions}
           value={formData.role}
@@ -251,7 +240,7 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({
           </label>
         </div>
 
-        <Button type="submit" variant="primary" fullWidth disabled={isLoading}>
+        <Button type="submit" variant="default" disabled={isLoading}>
           {isLoading ? "Registrando..." : "Registrar"}
         </Button>
       </form>

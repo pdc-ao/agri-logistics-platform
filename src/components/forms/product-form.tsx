@@ -1,8 +1,26 @@
 import React from 'react';
 import { Card } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import { Select } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
+
+interface ProductFormData {
+  title: string;
+  description: string;
+  category: string;
+  subcategory: string;
+  quantityAvailable: string | number;
+  unitOfMeasure: string;
+  pricePerUnit: string | number;
+  currency: string;
+  plannedAvailabilityDate: string;
+  actualAvailabilityDate: string;
+  locationAddress: string;
+  locationLatitude: string | number;
+  locationLongitude: string | number;
+  qualityCertifications: string;
+  imagesUrls: string[];
+  videoUrl: string;
+  status: string;
+}
 
 interface ProductFormProps {
   onSubmit: (data: {
@@ -37,7 +55,7 @@ export const ProductForm: React.FC<ProductFormProps> = ({
   initialData,
   isEditing = false,
 }) => {
-  const [formData, setFormData] = React.useState({
+  const [formData, setFormData] = React.useState<ProductFormData>({
     title: initialData?.title || '',
     description: initialData?.description || '',
     category: initialData?.category || '',
@@ -83,7 +101,7 @@ export const ProductForm: React.FC<ProductFormProps> = ({
   const removeImage = (index: number) => {
     setFormData((prev) => ({
       ...prev,
-      imagesUrls: prev.imagesUrls.filter((_, i) => i !== index),
+      imagesUrls: prev.imagesUrls.filter((_item: string, i: number) => i !== index),
     }));
   };
 
@@ -151,178 +169,265 @@ export const ProductForm: React.FC<ProductFormProps> = ({
         )}
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <Input
-            id="title"
-            name="title"
-            label="Título do Produto"
-            type="text"
-            placeholder="Ex: Milho Amarelo de Alta Qualidade"
-            value={formData.title}
-            onChange={handleChange}
-            required
-          />
+          {/* Title */}
+          <div>
+            <label htmlFor="title" className="block text-sm font-medium text-gray-700 mb-1">
+              Título do Produto <span className="text-red-500">*</span>
+            </label>
+            <input
+              id="title"
+              name="title"
+              type="text"
+              placeholder="Ex: Milho Amarelo de Alta Qualidade"
+              value={formData.title}
+              onChange={handleChange}
+              required
+              className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500"
+            />
+          </div>
 
-          <Select
-            id="category"
-            name="category"
-            label="Categoria"
-            options={categoryOptions}
-            value={formData.category}
-            onChange={handleChange}
-            required
-          />
+          {/* Category */}
+          <div>
+            <label htmlFor="category" className="block text-sm font-medium text-gray-700 mb-1">
+              Categoria <span className="text-red-500">*</span>
+            </label>
+            <select
+              id="category"
+              name="category"
+              value={formData.category}
+              onChange={handleChange}
+              required
+              className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500"
+            >
+              <option value="">Selecione uma categoria</option>
+              {categoryOptions.map((option) => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
+            </select>
+          </div>
 
-          <Input
-            id="subcategory"
-            name="subcategory"
-            label="Subcategoria (opcional)"
-            type="text"
-            placeholder="Ex: Milho Amarelo"
-            value={formData.subcategory}
-            onChange={handleChange}
-          />
+          {/* Subcategory */}
+          <div>
+            <label htmlFor="subcategory" className="block text-sm font-medium text-gray-700 mb-1">
+              Subcategoria (opcional)
+            </label>
+            <input
+              id="subcategory"
+              name="subcategory"
+              type="text"
+              placeholder="Ex: Milho Amarelo"
+              value={formData.subcategory}
+              onChange={handleChange}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500"
+            />
+          </div>
 
+          {/* Quantity and Unit */}
           <div className="flex space-x-4">
             <div className="flex-1">
-              <Input
+              <label htmlFor="quantityAvailable" className="block text-sm font-medium text-gray-700 mb-1">
+                Quantidade Disponível <span className="text-red-500">*</span>
+              </label>
+              <input
                 id="quantityAvailable"
                 name="quantityAvailable"
-                label="Quantidade Disponível"
                 type="number"
                 placeholder="Ex: 1000"
                 value={formData.quantityAvailable}
                 onChange={handleNumberChange}
                 required
+                className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500"
               />
             </div>
             <div className="flex-1">
-              <Select
+              <label htmlFor="unitOfMeasure" className="block text-sm font-medium text-gray-700 mb-1">
+                Unidade de Medida <span className="text-red-500">*</span>
+              </label>
+              <select
                 id="unitOfMeasure"
                 name="unitOfMeasure"
-                label="Unidade de Medida"
-                options={unitOptions}
                 value={formData.unitOfMeasure}
                 onChange={handleChange}
                 required
-              />
+                className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500"
+              >
+                <option value="">Selecione</option>
+                {unitOptions.map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
+              </select>
             </div>
           </div>
 
+          {/* Price and Currency */}
           <div className="flex space-x-4">
             <div className="flex-1">
-              <Input
+              <label htmlFor="pricePerUnit" className="block text-sm font-medium text-gray-700 mb-1">
+                Preço por Unidade <span className="text-red-500">*</span>
+              </label>
+              <input
                 id="pricePerUnit"
                 name="pricePerUnit"
-                label="Preço por Unidade"
                 type="number"
                 placeholder="Ex: 500"
                 value={formData.pricePerUnit}
                 onChange={handleNumberChange}
                 required
+                className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500"
               />
             </div>
             <div className="flex-1">
-              <Input
+              <label htmlFor="currency" className="block text-sm font-medium text-gray-700 mb-1">
+                Moeda
+              </label>
+              <input
                 id="currency"
                 name="currency"
-                label="Moeda"
                 type="text"
                 value={formData.currency}
                 onChange={handleChange}
                 disabled
+                className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm bg-gray-100 cursor-not-allowed"
               />
             </div>
           </div>
 
-          <Input
-            id="plannedAvailabilityDate"
-            name="plannedAvailabilityDate"
-            label="Data Planejada de Disponibilidade"
-            type="date"
-            value={formData.plannedAvailabilityDate}
-            onChange={handleChange}
-          />
+          {/* Planned Availability Date */}
+          <div>
+            <label htmlFor="plannedAvailabilityDate" className="block text-sm font-medium text-gray-700 mb-1">
+              Data Planejada de Disponibilidade
+            </label>
+            <input
+              id="plannedAvailabilityDate"
+              name="plannedAvailabilityDate"
+              type="date"
+              value={formData.plannedAvailabilityDate}
+              onChange={handleChange}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500"
+            />
+          </div>
 
-          <Input
-            id="actualAvailabilityDate"
-            name="actualAvailabilityDate"
-            label="Data Real de Disponibilidade"
-            type="date"
-            value={formData.actualAvailabilityDate}
-            onChange={handleChange}
-          />
+          {/* Actual Availability Date */}
+          <div>
+            <label htmlFor="actualAvailabilityDate" className="block text-sm font-medium text-gray-700 mb-1">
+              Data Real de Disponibilidade
+            </label>
+            <input
+              id="actualAvailabilityDate"
+              name="actualAvailabilityDate"
+              type="date"
+              value={formData.actualAvailabilityDate}
+              onChange={handleChange}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500"
+            />
+          </div>
 
-          <Input
-            id="locationAddress"
-            name="locationAddress"
-            label="Endereço de Localização"
-            type="text"
-            placeholder="Ex: Fazenda Boa Esperança, Huambo"
-            value={formData.locationAddress}
-            onChange={handleChange}
-          />
+          {/* Location Address */}
+          <div>
+            <label htmlFor="locationAddress" className="block text-sm font-medium text-gray-700 mb-1">
+              Endereço de Localização
+            </label>
+            <input
+              id="locationAddress"
+              name="locationAddress"
+              type="text"
+              placeholder="Ex: Fazenda Boa Esperança, Huambo"
+              value={formData.locationAddress}
+              onChange={handleChange}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500"
+            />
+          </div>
 
+          {/* Latitude and Longitude */}
           <div className="flex space-x-4">
             <div className="flex-1">
-              <Input
+              <label htmlFor="locationLatitude" className="block text-sm font-medium text-gray-700 mb-1">
+                Latitude
+              </label>
+              <input
                 id="locationLatitude"
                 name="locationLatitude"
-                label="Latitude"
                 type="number"
                 step="0.000001"
                 placeholder="Ex: -12.345678"
                 value={formData.locationLatitude}
                 onChange={handleNumberChange}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500"
               />
             </div>
             <div className="flex-1">
-              <Input
+              <label htmlFor="locationLongitude" className="block text-sm font-medium text-gray-700 mb-1">
+                Longitude
+              </label>
+              <input
                 id="locationLongitude"
                 name="locationLongitude"
-                label="Longitude"
                 type="number"
                 step="0.000001"
                 placeholder="Ex: 15.678901"
                 value={formData.locationLongitude}
                 onChange={handleNumberChange}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500"
               />
             </div>
           </div>
 
-          <Select
-            id="status"
-            name="status"
-            label="Status"
-            options={statusOptions}
-            value={formData.status}
-            onChange={handleChange}
-            required
-          />
+          {/* Status */}
+          <div>
+            <label htmlFor="status" className="block text-sm font-medium text-gray-700 mb-1">
+              Status <span className="text-red-500">*</span>
+            </label>
+            <select
+              id="status"
+              name="status"
+              value={formData.status}
+              onChange={handleChange}
+              required
+              className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500"
+            >
+              {statusOptions.map((option) => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
+            </select>
+          </div>
 
-          <Input
-            id="qualityCertifications"
-            name="qualityCertifications"
-            label="Certificações de Qualidade"
-            type="text"
-            placeholder="Ex: Certificação Orgânica, ISO 22000"
-            value={formData.qualityCertifications}
-            onChange={handleChange}
-          />
+          {/* Quality Certifications */}
+          <div>
+            <label htmlFor="qualityCertifications" className="block text-sm font-medium text-gray-700 mb-1">
+              Certificações de Qualidade
+            </label>
+            <input
+              id="qualityCertifications"
+              name="qualityCertifications"
+              type="text"
+              placeholder="Ex: Certificação Orgânica, ISO 22000"
+              value={formData.qualityCertifications}
+              onChange={handleChange}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500"
+            />
+          </div>
         </div>
 
+        {/* Images */}
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">
             Imagens do Produto
           </label>
           <div className="flex space-x-2">
-            <Input
+            <input
               id="imageUrl"
               name="imageUrl"
               placeholder="URL da imagem"
               type="text"
               value={imageUrl}
               onChange={(e) => setImageUrl(e.target.value)}
-              className="mb-0"
+              className="flex-1 px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500"
             />
             <Button
               type="button"
@@ -359,16 +464,23 @@ export const ProductForm: React.FC<ProductFormProps> = ({
           )}
         </div>
 
-        <Input
-          id="videoUrl"
-          name="videoUrl"
-          label="URL do Vídeo (opcional)"
-          type="text"
-          placeholder="Ex: https://www.youtube.com/watch?v=..."
-          value={formData.videoUrl}
-          onChange={handleChange}
-        />
+        {/* Video URL */}
+        <div>
+          <label htmlFor="videoUrl" className="block text-sm font-medium text-gray-700 mb-1">
+            URL do Vídeo (opcional)
+          </label>
+          <input
+            id="videoUrl"
+            name="videoUrl"
+            type="text"
+            placeholder="Ex: https://www.youtube.com/watch?v=..."
+            value={formData.videoUrl}
+            onChange={handleChange}
+            className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500"
+          />
+        </div>
 
+        {/* Description */}
         <div>
           <label htmlFor="description" className="block text-sm font-medium text-gray-700 mb-1">
             Descrição <span className="text-red-500">*</span>
@@ -387,8 +499,7 @@ export const ProductForm: React.FC<ProductFormProps> = ({
 
         <Button
           type="submit"
-          variant="primary"
-          fullWidth
+          variant="default"
           disabled={isLoading}
         >
           {isLoading ? 'Salvando...' : isEditing ? 'Atualizar Produto' : 'Adicionar Produto'}
@@ -399,4 +510,3 @@ export const ProductForm: React.FC<ProductFormProps> = ({
 };
 
 export default ProductForm;
-

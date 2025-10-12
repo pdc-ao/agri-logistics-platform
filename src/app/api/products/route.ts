@@ -1,3 +1,4 @@
+// src/app/api/products/route.ts
 import { NextRequest, NextResponse } from "next/server";
 import { withAuth } from "@/lib/session-validation";
 import { db } from "@/lib/prisma";
@@ -6,25 +7,58 @@ import { rateLimit } from "@/lib/rate-limit";
 import { requirePermission } from "@/lib/rbac-middleware";
 import { Prisma } from "@prisma/client";
 
-
 const productRateLimit = rateLimit({
   windowMs: 60000,
   maxRequests: 10,
 });
 
+// Helper: record API metric into AuditLog
+async function recordMetric(
+  endpoint: string,
+  duration: number,
+  statusCode: number,
+  userId?: string
+) {
+  try {
+    await db.auditLog.create({
+      data: {
+        userId,
+        action: "API_CALL",
+        entityType: "ENDPOINT",
+        entityId: endpoint,
+        details: { duration, statusCode },
+      },
+    });
+  } catch (err) {
+    console.error("Failed to record metric:", err);
+  }
+}
+
+// =======================================
 // POST: Create a new product listing
+// =======================================
 export const POST = withAuth(async (request: NextRequest, context, user) => {
+  const startTime = Date.now();
+  let statusCode = 200;
+
   try {
     const rateLimitResponse = await productRateLimit(request);
-    if (rateLimitResponse) return rateLimitResponse;
+    if (rateLimitResponse) {
+      statusCode = rateLimitResponse.status;
+      return rateLimitResponse;
+    }
 
     const permissionResponse = await requirePermission("product:create")(request);
-    if (permissionResponse) return permissionResponse;
+    if (permissionResponse) {
+      statusCode = permissionResponse.status;
+      return permissionResponse;
+    }
 
     const body = await request.json();
     const validation = validateRequest(createProductSchema, body);
 
     if (!validation.success) {
+      statusCode = 400;
       return NextResponse.json(
         {
           error: "Validation failed",
@@ -33,38 +67,33 @@ export const POST = withAuth(async (request: NextRequest, context, user) => {
             message: issue.message,
           })),
         },
-        { status: 400 }
+        { status: statusCode }
       );
     }
 
     // Ensure user is a valid PRODUCER
     const producer = await db.user.findFirst({
-      where: {
-        id: user.id,
-        role: "PRODUCER",
-        entityType: "INDIVIDUAL",
-      },
+      where: { id: user.id, role: "PRODUCER", entityType: "INDIVIDUAL" },
     });
 
     if (!producer) {
-      return NextResponse.json({ error: "Unauthorized producer" }, { status: 403 });
+      statusCode = 403;
+      return NextResponse.json({ error: "Unauthorized producer" }, { status: statusCode });
     }
 
     const data = validation.data!;
-
-    // Map request fields → Prisma model fields
     const product = await db.productListing.create({
       data: {
-        title: data.name,                       // map → title
+        title: data.name,
         description: data.description,
         category: data.category,
         subcategory: data.subcategory,
-        pricePerUnit: data.price,               // map → pricePerUnit
-        quantityAvailable: data.quantity,       // map → quantityAvailable
-        unitOfMeasure: data.unit,               // map → unitOfMeasure
-        currency: "AOA",                        // default
+        pricePerUnit: data.price,
+        quantityAvailable: data.quantity,
+        unitOfMeasure: data.unit,
+        currency: "AOA",
         locationAddress: data.location,
-        imagesUrls: data.images,                // Json? field
+        imagesUrls: data.images,
         producerId: user.id,
         status: "Active",
       },
@@ -73,12 +102,21 @@ export const POST = withAuth(async (request: NextRequest, context, user) => {
     return NextResponse.json({ success: true, product });
   } catch (error) {
     console.error("Error creating product:", error);
-    return NextResponse.json({ error: "Failed to create product" }, { status: 500 });
+    statusCode = 500;
+    return NextResponse.json({ error: "Failed to create product" }, { status: statusCode });
+  } finally {
+    const duration = Date.now() - startTime;
+    await recordMetric("/api/products", duration, statusCode, user.id);
   }
 }, ["PRODUCER", "ADMIN"]);
 
-// GET: Fetch product listings with filters and pagination
+// =======================================
+// GET: Fetch product listings
+// =======================================
 export const GET = async (request: NextRequest) => {
+  const startTime = Date.now();
+  let statusCode = 200;
+
   try {
     const { searchParams } = new URL(request.url);
 
@@ -92,27 +130,25 @@ export const GET = async (request: NextRequest) => {
     const sort = searchParams.get("sort") || "date_desc";
 
     let orderBy: Prisma.ProductListingOrderByWithRelationInput;
-
-switch (sort) {
-  case "price_asc":
-    orderBy = { pricePerUnit: "asc" };
-    break;
-  case "price_desc":
-    orderBy = { pricePerUnit: "desc" };
-    break;
-  case "qty_desc":
-    orderBy = { quantityAvailable: "desc" };
-    break;
-  case "qty_asc":
-    orderBy = { quantityAvailable: "asc" };
-    break;
-  case "date_asc":
-    orderBy = { createdAt: "asc" };
-    break;
-  default:
-    orderBy = { createdAt: "desc" };
-}
-
+    switch (sort) {
+      case "price_asc":
+        orderBy = { pricePerUnit: "asc" };
+        break;
+      case "price_desc":
+        orderBy = { pricePerUnit: "desc" };
+        break;
+      case "qty_desc":
+        orderBy = { quantityAvailable: "desc" };
+        break;
+      case "qty_asc":
+        orderBy = { quantityAvailable: "asc" };
+        break;
+      case "date_asc":
+        orderBy = { createdAt: "asc" };
+        break;
+      default:
+        orderBy = { createdAt: "desc" };
+    }
 
     const whereClause: any = {
       status: "Active",
@@ -144,9 +180,7 @@ switch (sort) {
               averageRating: true,
             },
           },
-          reviews: {
-            select: { id: true, rating: true },
-          },
+          reviews: { select: { id: true, rating: true } },
         },
       }),
       db.productListing.count({ where: whereClause }),
@@ -163,6 +197,10 @@ switch (sort) {
     });
   } catch (error) {
     console.error("Error fetching products:", error);
-    return NextResponse.json({ error: "Failed to fetch products" }, { status: 500 });
+    statusCode = 500;
+    return NextResponse.json({ error: "Failed to fetch products" }, { status: statusCode });
+  } finally {
+    const duration = Date.now() - startTime;
+    await recordMetric("/api/products", duration, statusCode);
   }
 };
