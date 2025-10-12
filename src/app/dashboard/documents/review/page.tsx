@@ -1,4 +1,6 @@
+export const dynamic = "force-dynamic";
 import { PrismaClient, DocumentStatus } from '@prisma/client';
+import { db } from "@/lib/prisma"; // better, see step 3
 
 const prisma = new PrismaClient();
 
