@@ -24,24 +24,19 @@ export type VerificationStatus = "PENDING" | "VERIFIED" | "REJECTED";
 
 export interface BasicUser {
   id: string;
-  username: string;
+  username?: string;
   email: string;
-  fullName: string;
-  role: UserRole;
+  fullName: string | null; // allow both null and undefined via optional
+  role?: UserRole;
   isVerified?: boolean;
   verificationStatus?: VerificationStatus;
   averageRating?: number;
   createdAt?: Date;
 }
 
-export interface BasicUser {
-  id: string;
-  email: string;
-  fullName: string | null; // allow both undefined and null
-}
-
 export interface AdminUser extends BasicUser {
-  fullName: string | null;
+  username: string;
+  role: UserRole;
   createdAt: Date;
 }
 
@@ -140,8 +135,8 @@ export interface Document {
 export interface BusinessDocument {
   id: string;
   userId: string;
-  docType: string;   // ✅ add this
-  type: string;          // e.g. "BUSINESS_REGISTRATION", "LICENSE", etc.
+  docType: string;
+  type: string;
   fileName: string;
   fileUrl: string;
   status: "PENDING" | "VERIFIED" | "REJECTED";
@@ -150,14 +145,18 @@ export interface BusinessDocument {
   reviewedAt?: Date;
   createdAt: Date;
   updatedAt?: Date;
-  submittedAt?: Date;   // ✅ add this
+  submittedAt: Date | string;
+  user: {
+    fullName: string | null;
+    username: string;
+  };
 }
 
 export interface WalletBalance {
   userId: string;
-  available: number;   // funds available for use
-  pending: number;     // funds pending clearance
-  currency: string;    // e.g. "AOA", "USD"
+  available: number;
+  pending: number;
+  currency: string;
   updatedAt: Date;
 }
 
@@ -169,3 +168,4 @@ export interface PaymentTransaction {
   type: "CREDIT" | "DEBIT";
   status: "PENDING" | "COMPLETED" | "FAILED";
   createdAt: Date;
+}
